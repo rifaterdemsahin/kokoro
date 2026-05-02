@@ -112,6 +112,7 @@ async def enhance(text: str = Form(...), lang: str = Form("en")):
             f"The language is {'Turkish' if lang == 'tr' else 'English'}. "
             f"Respond ONLY with the enhanced text, without any quotes or explanations.\n\nText: {text}"
         )
+        print(f"[DEBUG] Enhance Prompt: {prompt}")
         
         response = model.generate_content(prompt)
         enhanced_text = response.text.strip()
@@ -132,6 +133,20 @@ async def tts(
         raise HTTPException(status_code=400, detail=f"Unknown voice: {voice}")
 
     try:
+        # Generate a meaningful filename using Gemini
+        filename = "kokoro-audio.mp3"
+        try:
+            model = genai.GenerativeModel("gemini-2.5-flash")
+            name_prompt = f"Generate a 2-3 word slug (lowercase, hyphen-separated, no extension) summarizing this text for a filename. Respond ONLY with the slug.\n\nText: {text[:500]}"
+            res = model.generate_content(name_prompt)
+            slug = res.text.strip().lower().replace(' ', '-')
+            import re
+            slug = re.sub(r'[^a-z0-9\-]', '', slug)
+            if slug:
+                filename = f"{slug}.mp3"
+        except Exception as e:
+            print(f"[DEBUG] Filename generation failed: {e}")
+
         # Edge-TTS logic for Turkish
         if voice.startswith("tr-"):
             rate_str = f"+{int((speed - 1.0) * 100)}%" if speed >= 1.0 else f"{int((speed - 1.0) * 100)}%"
@@ -146,7 +161,7 @@ async def tts(
             return StreamingResponse(
                 buffer,
                 media_type="audio/mpeg",
-                headers={"Content-Disposition": "attachment; filename=kokoro-audio.mp3"}
+                headers={"Content-Disposition": f"attachment; filename={filename}"}
             )
             
         # Kokoro logic
@@ -175,7 +190,7 @@ async def tts(
         return StreamingResponse(
             buffer,
             media_type="audio/mpeg",
-            headers={"Content-Disposition": "attachment; filename=kokoro-audio.mp3"}
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
