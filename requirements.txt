@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+kokoro-onnx
+soundfile
+python-multipart
+jinja2
+aiofiles
+huggingface-hub

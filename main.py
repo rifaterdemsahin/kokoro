@@ -94,10 +94,9 @@ HTML_UI = '''<!DOCTYPE html>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #0f0f23; color: #e0e0e0;
-            min-height: 100vh; display: flex; justify-content: center;
-            align-items: flex-start; padding: 40px 20px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0f0f23; color: #e0e0e0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
         }
         .container { width: 100%; max-width: 720px; }
         h1 {
@@ -106,6 +105,15 @@ HTML_UI = '''<!DOCTYPE html>
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+        .header-top {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .lang-toggle {
+            background: #1a1a2e; border: 1px solid #2a2a4a; color: #e0e0e0;
+            padding: 5px 10px; border-radius: 6px; cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .lang-toggle:focus { outline: none; border-color: #667eea; }
         .subtitle { color: #888; margin-bottom: 30px; font-size: 0.95rem; }
         .card {
             background: #1a1a2e; border-radius: 16px; padding: 28px;
@@ -136,18 +144,18 @@ HTML_UI = '''<!DOCTYPE html>
             display: flex; justify-content: space-between;
             font-size: 0.85rem; color: #888; margin-top: 4px;
         }
-        button {
+        button.generate-btn {
             width: 100%; margin-top: 20px; padding: 16px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none; border-radius: 10px; color: white;
             font-size: 1rem; font-weight: 600; cursor: pointer;
             transition: transform 0.15s, box-shadow 0.15s;
         }
-        button:hover:not(:disabled) {
+        button.generate-btn:hover:not(:disabled) {
             transform: translateY(-1px);
             box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
         }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button.generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .status {
             margin-top: 16px; padding: 12px 16px; border-radius: 10px;
             font-size: 0.9rem; display: none;
@@ -171,15 +179,21 @@ HTML_UI = '''<!DOCTYPE html>
 </head>
 <body>
     <div class="container">
-        <h1>Kokoro TTS</h1>
-        <p class="subtitle">Paste text, pick a voice, get instant audio. No cloud. No credits.</p>
+        <div class="header-top">
+            <h1>Kokoro TTS</h1>
+            <select id="uiLang" class="lang-toggle" onchange="switchLang()">
+                <option value="en">English</option>
+                <option value="tr">Türkçe</option>
+            </select>
+        </div>
+        <p class="subtitle" id="t-subtitle">Paste text, pick a voice, get instant audio. No cloud. No credits.</p>
         <div class="card">
-            <label for="text">Your Text</label>
+            <label for="text" id="t-your-text">Your Text</label>
             <textarea id="text" placeholder="Type or paste your text here...">Hello! This is Kokoro speaking from the cloud.</textarea>
             <div class="char-count" id="charCount">0 chars</div>
             <div class="controls">
                 <div>
-                    <label for="voice">Voice</label>
+                    <label for="voice" id="t-voice">Voice</label>
                     <select id="voice">
                         <option value="af_heart" selected>AF Heart — Female (US)</option>
                         <option value="af_bella">AF Bella — Female (US)</option>
@@ -191,21 +205,78 @@ HTML_UI = '''<!DOCTYPE html>
                     </select>
                 </div>
                 <div>
-                    <label for="speed">Speed</label>
+                    <label for="speed" id="t-speed">Speed</label>
                     <input type="range" id="speed" min="0.5" max="1.5" step="0.1" value="1.0">
-                    <div class="speed-label"><span>Slow</span><span id="speedVal">1.0x</span><span>Fast</span></div>
+                    <div class="speed-label"><span id="t-slow">Slow</span><span id="speedVal">1.0x</span><span id="t-fast">Fast</span></div>
                 </div>
             </div>
-            <button id="generateBtn" onclick="generateAudio()">Generate Audio</button>
+            <button class="generate-btn" id="generateBtn" onclick="generateAudio()">Generate Audio</button>
             <div class="status" id="status"></div>
             <audio id="player" controls style="display:none;"></audio>
             <div class="download-row" id="downloadRow" style="display:none;">
                 <a id="downloadMp3" href="#" download="kokoro-audio.mp3">Download MP3</a>
             </div>
         </div>
-        <p class="footer">Powered by Kokoro-82M &middot; Running on fly.io</p>
+        <p class="footer" id="t-footer">Powered by Kokoro-82M &middot; Running on fly.io</p>
     </div>
     <script>
+        const i18n = {
+            en: {
+                subtitle: "Paste text, pick a voice, get instant audio. No cloud. No credits.",
+                yourText: "Your Text",
+                placeholder: "Type or paste your text here...",
+                voice: "Voice",
+                speed: "Speed",
+                slow: "Slow",
+                fast: "Fast",
+                generateBtn: "Generate Audio",
+                downloadMp3: "Download MP3",
+                footer: "Powered by Kokoro-82M &middot; Running on fly.io",
+                chars: "chars",
+                errEmpty: "Please enter some text.",
+                errTooLong: "Text too long. Max 5000 chars.",
+                generating: "Generating audio... please wait (first load may take 15s).",
+                success: "Audio ready! Playing now.",
+                error: "Error: "
+            },
+            tr: {
+                subtitle: "Metni yapıştırın, sesi seçin, anında ses alın. Bulut yok. Kredi yok.",
+                yourText: "Metniniz",
+                placeholder: "Metninizi buraya yazın veya yapıştırın...",
+                voice: "Ses",
+                speed: "Hız",
+                slow: "Yavaş",
+                fast: "Hızlı",
+                generateBtn: "Ses Oluştur",
+                downloadMp3: "MP3 İndir",
+                footer: "Kokoro-82M tarafından desteklenmektedir &middot; fly.io üzerinde çalışıyor",
+                chars: "karakter",
+                errEmpty: "Lütfen bir metin girin.",
+                errTooLong: "Metin çok uzun. Maksimum 5000 karakter.",
+                generating: "Ses oluşturuluyor... lütfen bekleyin (ilk yükleme 15sn sürebilir).",
+                success: "Ses hazır! Şimdi çalınıyor.",
+                error: "Hata: "
+            }
+        };
+
+        let currentLang = 'en';
+
+        function switchLang() {
+            currentLang = document.getElementById('uiLang').value;
+            const t = i18n[currentLang];
+            document.getElementById('t-subtitle').innerHTML = t.subtitle;
+            document.getElementById('t-your-text').innerText = t.yourText;
+            document.getElementById('text').placeholder = t.placeholder;
+            document.getElementById('t-voice').innerText = t.voice;
+            document.getElementById('t-speed').innerText = t.speed;
+            document.getElementById('t-slow').innerText = t.slow;
+            document.getElementById('t-fast').innerText = t.fast;
+            document.getElementById('generateBtn').innerText = t.generateBtn;
+            document.getElementById('downloadMp3').innerText = t.downloadMp3;
+            document.getElementById('t-footer').innerHTML = t.footer;
+            updateCharCount();
+        }
+
         const textEl = document.getElementById('text');
         const voiceEl = document.getElementById('voice');
         const speedEl = document.getElementById('speed');
@@ -217,20 +288,24 @@ HTML_UI = '''<!DOCTYPE html>
         const downloadMp3 = document.getElementById('downloadMp3');
         const charCount = document.getElementById('charCount');
 
-        textEl.addEventListener('input', () => {
-            charCount.textContent = textEl.value.length + ' chars';
-        });
-        charCount.textContent = textEl.value.length + ' chars';
+        function updateCharCount() {
+            charCount.textContent = textEl.value.length + ' ' + i18n[currentLang].chars;
+        }
+
+        textEl.addEventListener('input', updateCharCount);
+        updateCharCount();
+
         speedEl.addEventListener('input', () => {
             speedValEl.textContent = speedEl.value + 'x';
         });
 
         async function generateAudio() {
             const text = textEl.value.trim();
-            if (!text) { showStatus('Please enter some text.', 'error'); return; }
-            if (text.length > 5000) { showStatus('Text too long. Max 5000 chars.', 'error'); return; }
+            const t = i18n[currentLang];
+            if (!text) { showStatus(t.errEmpty, 'error'); return; }
+            if (text.length > 5000) { showStatus(t.errTooLong, 'error'); return; }
             btn.disabled = true;
-            showStatus('Generating audio... please wait (first load may take 15s).', 'loading');
+            showStatus(t.generating, 'loading');
             player.style.display = 'none'; downloadRow.style.display = 'none';
             try {
                 const formData = new FormData();
@@ -246,9 +321,9 @@ HTML_UI = '''<!DOCTYPE html>
                 const url = URL.createObjectURL(blob);
                 player.src = url; player.style.display = 'block'; player.play();
                 downloadMp3.href = url; downloadRow.style.display = 'flex';
-                showStatus('Audio ready! Playing now.', 'success');
+                showStatus(t.success, 'success');
             } catch (err) {
-                showStatus('Error: ' + err.message, 'error');
+                showStatus(t.error + err.message, 'error');
             } finally { btn.disabled = false; }
         }
         function showStatus(msg, type) {
@@ -257,7 +332,8 @@ HTML_UI = '''<!DOCTYPE html>
         }
     </script>
 </body>
-</html>'''
+</html>
+'''
 
 # ── Endpoints ───────────────────────────────────────────────────────
 
