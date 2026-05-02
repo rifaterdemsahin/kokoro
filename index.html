@@ -32,10 +32,21 @@
             background: #1a1a2e; border-radius: 16px; padding: 28px;
             margin-bottom: 20px; border: 1px solid #2a2a4a;
         }
-        label {
-            display: block; margin-bottom: 8px; font-size: 0.85rem;
-            text-transform: uppercase; letter-spacing: 0.5px; color: #a0a0c0;
+        .label-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px;
         }
+        label {
+            font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: #a0a0c0;
+        }
+        button.gemini-btn {
+            background: linear-gradient(90deg, #1d976c 0%, #93f9b9 100%);
+            border: none; border-radius: 6px; padding: 4px 10px; color: #000;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button.gemini-btn:hover { opacity: 0.9; }
+        button.gemini-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         textarea {
             width: 100%; min-height: 180px; background: #0f0f23;
             border: 1px solid #2a2a4a; border-radius: 10px; padding: 14px;
@@ -101,20 +112,17 @@
         </div>
         <p class="subtitle" id="t-subtitle">Paste text, pick a voice, get instant audio. No cloud. No credits.</p>
         <div class="card">
-            <label for="text" id="t-your-text">Your Text</label>
+            <div class="label-row">
+                <label for="text" id="t-your-text">Your Text</label>
+                <button class="gemini-btn" id="enhanceBtn" onclick="enhanceText()">✨ Enhance Text</button>
+            </div>
             <textarea id="text" placeholder="Type or paste your text here...">Hello! This is Kokoro speaking from the cloud.</textarea>
             <div class="char-count" id="charCount">0 chars</div>
             <div class="controls">
                 <div>
                     <label for="voice" id="t-voice">Voice</label>
                     <select id="voice">
-                        <option value="af_heart" selected>AF Heart — Female (US)</option>
-                        <option value="af_bella">AF Bella — Female (US)</option>
-                        <option value="af_nicole">AF Nicole — Female (US)</option>
-                        <option value="am_adam">AM Adam — Male (US)</option>
-                        <option value="am_michael">AM Michael — Male (US)</option>
-                        <option value="bf_emma">BF Emma — Female (UK)</option>
-                        <option value="bm_george">BM George — Male (UK)</option>
+                        <!-- Populated by JS -->
                     </select>
                 </div>
                 <div>
@@ -133,6 +141,22 @@
         <p class="footer" id="t-footer">Powered by Kokoro-82M &middot; Running on fly.io</p>
     </div>
     <script>
+        const voicesData = {
+            en: [
+                { value: "af_heart", text: "AF Heart — Female (US)" },
+                { value: "af_bella", text: "AF Bella — Female (US)" },
+                { value: "af_nicole", text: "AF Nicole — Female (US)" },
+                { value: "am_adam", text: "AM Adam — Male (US)" },
+                { value: "am_michael", text: "AM Michael — Male (US)" },
+                { value: "bf_emma", text: "BF Emma — Female (UK)" },
+                { value: "bm_george", text: "BM George — Male (UK)" }
+            ],
+            tr: [
+                { value: "tr-TR-EmelNeural", text: "TR Emel — Female (TR)" },
+                { value: "tr-TR-AhmetNeural", text: "TR Ahmet — Male (TR)" }
+            ]
+        };
+
         const i18n = {
             en: {
                 subtitle: "Paste text, pick a voice, get instant audio. No cloud. No credits.",
@@ -143,12 +167,14 @@
                 slow: "Slow",
                 fast: "Fast",
                 generateBtn: "Generate Audio",
+                enhanceBtn: "✨ Enhance Text",
                 downloadMp3: "Download MP3",
                 footer: "Powered by Kokoro-82M &middot; Running on fly.io",
                 chars: "chars",
                 errEmpty: "Please enter some text.",
                 errTooLong: "Text too long. Max 5000 chars.",
                 generating: "Generating audio... please wait (first load may take 15s).",
+                enhancing: "Enhancing text with Gemini...",
                 success: "Audio ready! Playing now.",
                 error: "Error: "
             },
@@ -161,18 +187,31 @@
                 slow: "Yavaş",
                 fast: "Hızlı",
                 generateBtn: "Ses Oluştur",
+                enhanceBtn: "✨ Metni Geliştir",
                 downloadMp3: "MP3 İndir",
                 footer: "Kokoro-82M tarafından desteklenmektedir &middot; fly.io üzerinde çalışıyor",
                 chars: "karakter",
                 errEmpty: "Lütfen bir metin girin.",
                 errTooLong: "Metin çok uzun. Maksimum 5000 karakter.",
                 generating: "Ses oluşturuluyor... lütfen bekleyin (ilk yükleme 15sn sürebilir).",
+                enhancing: "Gemini ile metin geliştiriliyor...",
                 success: "Ses hazır! Şimdi çalınıyor.",
                 error: "Hata: "
             }
         };
 
         let currentLang = 'en';
+        const voiceEl = document.getElementById('voice');
+
+        function populateVoices(lang) {
+            voiceEl.innerHTML = '';
+            voicesData[lang].forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.value;
+                opt.textContent = v.text;
+                voiceEl.appendChild(opt);
+            });
+        }
 
         function switchLang() {
             currentLang = document.getElementById('uiLang').value;
@@ -185,16 +224,18 @@
             document.getElementById('t-slow').innerText = t.slow;
             document.getElementById('t-fast').innerText = t.fast;
             document.getElementById('generateBtn').innerText = t.generateBtn;
+            document.getElementById('enhanceBtn').innerText = t.enhanceBtn;
             document.getElementById('downloadMp3').innerText = t.downloadMp3;
             document.getElementById('t-footer').innerHTML = t.footer;
             updateCharCount();
+            populateVoices(currentLang);
         }
 
         const textEl = document.getElementById('text');
-        const voiceEl = document.getElementById('voice');
         const speedEl = document.getElementById('speed');
         const speedValEl = document.getElementById('speedVal');
         const btn = document.getElementById('generateBtn');
+        const enhanceBtn = document.getElementById('enhanceBtn');
         const statusEl = document.getElementById('status');
         const player = document.getElementById('player');
         const downloadRow = document.getElementById('downloadRow');
@@ -207,24 +248,61 @@
 
         textEl.addEventListener('input', updateCharCount);
         updateCharCount();
+        populateVoices('en');
 
         speedEl.addEventListener('input', () => {
             speedValEl.textContent = speedEl.value + 'x';
         });
+
+        async function enhanceText() {
+            const text = textEl.value.trim();
+            const t = i18n[currentLang];
+            if (!text) { showStatus(t.errEmpty, 'error'); return; }
+            
+            enhanceBtn.disabled = true;
+            btn.disabled = true;
+            showStatus(t.enhancing, 'loading');
+            
+            try {
+                const formData = new FormData();
+                formData.append('text', text);
+                formData.append('lang', currentLang);
+                
+                const response = await fetch('/enhance', { method: 'POST', body: formData });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Enhancement failed');
+                }
+                const data = await response.json();
+                textEl.value = data.text;
+                updateCharCount();
+                showStatus('', '');
+                statusEl.style.display = 'none';
+            } catch (err) {
+                showStatus(t.error + err.message, 'error');
+            } finally { 
+                enhanceBtn.disabled = false; 
+                btn.disabled = false;
+            }
+        }
 
         async function generateAudio() {
             const text = textEl.value.trim();
             const t = i18n[currentLang];
             if (!text) { showStatus(t.errEmpty, 'error'); return; }
             if (text.length > 5000) { showStatus(t.errTooLong, 'error'); return; }
+            
             btn.disabled = true;
+            enhanceBtn.disabled = true;
             showStatus(t.generating, 'loading');
             player.style.display = 'none'; downloadRow.style.display = 'none';
+            
             try {
                 const formData = new FormData();
                 formData.append('text', text);
                 formData.append('voice', voiceEl.value);
                 formData.append('speed', speedEl.value);
+                
                 const response = await fetch('/tts', { method: 'POST', body: formData });
                 if (!response.ok) {
                     const err = await response.json();
@@ -237,11 +315,15 @@
                 showStatus(t.success, 'success');
             } catch (err) {
                 showStatus(t.error + err.message, 'error');
-            } finally { btn.disabled = false; }
+            } finally { 
+                btn.disabled = false;
+                enhanceBtn.disabled = false;
+            }
         }
         function showStatus(msg, type) {
             statusEl.textContent = msg;
             statusEl.className = 'status ' + type;
+            statusEl.style.display = msg ? 'block' : 'none';
         }
     </script>
 </body>

@@ -6,3 +6,5 @@ python-multipart
 jinja2
 aiofiles
 huggingface-hub
+edge-tts
+google-generativeai
