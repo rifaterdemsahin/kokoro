@@ -308,10 +308,19 @@
                     const err = await response.json();
                     throw new Error(err.detail || 'Generation failed');
                 }
+                
+                let filename = "kokoro-audio.mp3";
+                const disposition = response.headers.get('Content-Disposition');
+                if (disposition && disposition.includes('filename=')) {
+                    filename = disposition.split('filename=')[1].split(';')[0].replace(/"/g, '');
+                }
+
                 const blob = await response.blob();
                 const url = URL.createObjectURL(blob);
                 player.src = url; player.style.display = 'block'; player.play();
-                downloadMp3.href = url; downloadRow.style.display = 'flex';
+                downloadMp3.href = url; 
+                downloadMp3.download = filename;
+                downloadRow.style.display = 'flex';
                 showStatus(t.success, 'success');
             } catch (err) {
                 showStatus(t.error + err.message, 'error');
