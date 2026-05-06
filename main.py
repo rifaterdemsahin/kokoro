@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import io
 import os
+import re
 import urllib.request
 import soundfile as sf
 import tempfile
@@ -109,6 +110,8 @@ async def enhance(text: str = Form(...), lang: str = Form("en")):
         prompt = (
             f"Please enhance the following text for a voiceover/TTS generation. "
             f"Make it sound natural, conversational, and add appropriate punctuation for pacing. "
+            f"Do NOT use markdown formatting such as asterisks, bold, italics, or underscores. "
+            f"Use plain text only. "
             f"The language is {'Turkish' if lang == 'tr' else 'English'}. "
             f"Respond ONLY with the enhanced text, without any quotes or explanations.\n\nText: {text}"
         )
@@ -116,6 +119,10 @@ async def enhance(text: str = Form(...), lang: str = Form("en")):
         
         response = model.generate_content(prompt)
         enhanced_text = response.text.strip()
+        
+        # Strip any remaining markdown asterisks/underscores to ensure TTS-friendliness
+        enhanced_text = re.sub(r'(\*{1,2}|_{1,2})(.*?)\1', r'\2', enhanced_text)
+        enhanced_text = enhanced_text.replace('*', '')
         
         return {"text": enhanced_text}
     except Exception as e:

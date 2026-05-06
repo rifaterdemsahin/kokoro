@@ -138,6 +138,15 @@
                 <a id="downloadMp3" href="#" download="kokoro-audio.mp3">Download MP3</a>
             </div>
         </div>
+        <div class="card" id="debugPanel">
+            <div class="label-row">
+                <label style="color:#ff7a7a;">🛠 Debug Panel</label>
+            </div>
+            <div style="font-size:0.85rem; color:#aaa; line-height:1.6; margin-top:8px;">
+                <p><strong>Fix 1 — Asterisk cleanup:</strong> Gemini sometimes returns markdown emphasis like <code>*word*</code> or <code>**word**</code>. These are now stripped both <em>server-side</em> (enhanced prompt + regex cleanup in <code>main.py</code>) and <em>client-side</em> (fallback regex in <code>enhanceText()</code>) so the TTS engine never reads "star" or stumbles on formatting markers.</p>
+                <p style="margin-top:6px;"><strong>Fix 2 — Prompt hardening:</strong> The enhancement prompt now explicitly forbids markdown, bold, italics, and underscores, requesting plain text only.</p>
+            </div>
+        </div>
         <p class="footer" id="t-footer">Powered by Kokoro-82M &middot; Running on fly.io</p>
     </div>
     <script>
@@ -274,7 +283,10 @@
                     throw new Error(err.detail || 'Enhancement failed');
                 }
                 const data = await response.json();
-                textEl.value = data.text;
+                // Fallback: strip any markdown asterisks/underscores Gemini may have left behind
+                let cleaned = data.text.replace(/(\*{1,2}|_{1,2})(.*?)\1/g, '$2');
+                cleaned = cleaned.replace(/\*/g, '');
+                textEl.value = cleaned;
                 updateCharCount();
                 showStatus('', '');
                 statusEl.style.display = 'none';
