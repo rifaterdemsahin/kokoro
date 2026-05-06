@@ -98,6 +98,40 @@
         .download-row a:hover { background: #3a3a6a; }
         .footer { text-align: center; color: #555; font-size: 0.8rem; margin-top: 30px; }
         .char-count { text-align: right; font-size: 0.8rem; color: #666; margin-top: 4px; }
+        .help-btn {
+            background: #2a2a4a; border: 1px solid #3a3a6a; color: #e0e0e0;
+            padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;
+            margin-left: 8px;
+        }
+        .help-btn:hover { background: #3a3a6a; }
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            display: none; align-items: center; justify-content: center; z-index: 1000;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 16px;
+            max-width: 640px; width: 100%; max-height: 85vh; overflow-y: auto;
+            padding: 28px; position: relative;
+        }
+        .modal-close {
+            position: absolute; top: 14px; right: 18px; background: none; border: none;
+            color: #888; font-size: 1.4rem; cursor: pointer;
+        }
+        .modal-close:hover { color: #e0e0e0; }
+        .modal-content h2 {
+            margin-bottom: 16px; font-size: 1.3rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .modal-content h3 { font-size: 1rem; margin: 18px 0 8px; color: #a0a0c0; }
+        .modal-content p, .modal-content li { font-size: 0.9rem; color: #bbb; line-height: 1.6; }
+        .modal-content ul { margin-left: 18px; }
+        .modal-content code {
+            background: #0f0f23; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; color: #7ab8ff;
+        }
         @media (max-width: 480px) { .controls { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -105,10 +139,13 @@
     <div class="container">
         <div class="header-top">
             <h1>Kokoro TTS</h1>
-            <select id="uiLang" class="lang-toggle" onchange="switchLang()">
-                <option value="en">English</option>
-                <option value="tr">Türkçe</option>
-            </select>
+            <div style="display:flex; align-items:center;">
+                <select id="uiLang" class="lang-toggle" onchange="switchLang()">
+                    <option value="en">English</option>
+                    <option value="tr">Türkçe</option>
+                </select>
+                <button class="help-btn" onclick="openGuide()" title="How to use">?</button>
+            </div>
         </div>
         <p class="subtitle" id="t-subtitle">Paste text, pick a voice, get instant audio. No cloud. No credits.</p>
         <div class="card">
@@ -149,6 +186,42 @@
         </div>
         <p class="footer" id="t-footer">Powered by Kokoro-82M &middot; Running on fly.io</p>
     </div>
+
+    <div class="modal-overlay" id="guideModal" onclick="if(event.target===this)closeGuide()">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeGuide()">&times;</button>
+            <h2 id="g-title">📖 How to Use Kokoro TTS</h2>
+
+            <h3 id="g-quick">1. Quick Start</h3>
+            <ul>
+                <li id="g-q1">Paste or type your text into the big text box.</li>
+                <li id="g-q2">Pick a voice and set the speech speed.</li>
+                <li id="g-q3">Click <strong>Generate Audio</strong> and wait a few seconds.</li>
+                <li id="g-q4">The audio plays automatically. Use the player controls to pause or replay.</li>
+            </ul>
+
+            <h3 id="g-enhance">2. Enhance Text (AI-Powered)</h3>
+            <p id="g-e1">Click <strong>Enhance Text</strong> to let Gemini polish your writing. It adds natural punctuation, fixes pacing, and makes the text flow better for voiceover. The enhanced text is automatically cleaned of any markdown (asterisks, bold, italics) so the TTS engine reads it smoothly.</p>
+
+            <h3 id="g-voice">3. Voice & Speed</h3>
+            <ul>
+                <li id="g-v1"><strong>Voice:</strong> Choose between American/British English or Turkish voices. Turkish voices use Edge-TTS; English voices use Kokoro-82M.</li>
+                <li id="g-v2"><strong>Speed:</strong> Drag the slider from 0.5x (slow) to 1.5x (fast). 1.0x is natural speaking pace.</li>
+            </ul>
+
+            <h3 id="g-download">4. Download</h3>
+            <p id="g-d1">After generation, a <strong>Download MP3</strong> button appears. The filename is auto-generated from your text content (e.g., <code>bridge-builder-story.mp3</code>).</p>
+
+            <h3 id="g-tips">5. Tips</h3>
+            <ul>
+                <li id="g-t1">Maximum text length is <strong>5,000 characters</strong>.</li>
+                <li id="g-t2">The first generation after a server cold-start may take ~15 seconds. Subsequent requests are faster.</li>
+                <li id="g-t3">If you see a red error message, check that you entered text and selected a valid voice.</li>
+                <li id="g-t4">Switch language via the top-right dropdown. This changes the UI and available voices.</li>
+            </ul>
+        </div>
+    </div>
+
     <script>
         const voicesData = {
             en: [
@@ -180,6 +253,24 @@
                 downloadMp3: "Download MP3",
                 footer: "Powered by Kokoro-82M &middot; Running on fly.io",
                 chars: "chars",
+                guideTitle: "📖 How to Use Kokoro TTS",
+                guideQuick: "1. Quick Start",
+                guideQ1: "Paste or type your text into the big text box.",
+                guideQ2: "Pick a voice and set the speech speed.",
+                guideQ3: "Click Generate Audio and wait a few seconds.",
+                guideQ4: "The audio plays automatically. Use the player controls to pause or replay.",
+                guideEnhance: "2. Enhance Text (AI-Powered)",
+                guideE1: "Click Enhance Text to let Gemini polish your writing. It adds natural punctuation, fixes pacing, and makes the text flow better for voiceover. The enhanced text is automatically cleaned of any markdown (asterisks, bold, italics) so the TTS engine reads it smoothly.",
+                guideVoice: "3. Voice & Speed",
+                guideV1: "Voice: Choose between American/British English or Turkish voices. Turkish voices use Edge-TTS; English voices use Kokoro-82M.",
+                guideV2: "Speed: Drag the slider from 0.5x (slow) to 1.5x (fast). 1.0x is natural speaking pace.",
+                guideDownload: "4. Download",
+                guideD1: "After generation, a Download MP3 button appears. The filename is auto-generated from your text content (e.g., bridge-builder-story.mp3).",
+                guideTips: "5. Tips",
+                guideT1: "Maximum text length is 5,000 characters.",
+                guideT2: "The first generation after a server cold-start may take ~15 seconds. Subsequent requests are faster.",
+                guideT3: "If you see a red error message, check that you entered text and selected a valid voice.",
+                guideT4: "Switch language via the top-right dropdown. This changes the UI and available voices.",
                 errEmpty: "Please enter some text.",
                 errTooLong: "Text too long. Max 5000 chars.",
                 generating: "Generating audio... please wait (first load may take 15s).",
@@ -200,6 +291,24 @@
                 downloadMp3: "MP3 İndir",
                 footer: "Kokoro-82M tarafından desteklenmektedir &middot; fly.io üzerinde çalışıyor",
                 chars: "karakter",
+                guideTitle: "📖 Kokoro TTS Nasıl Kullanılır",
+                guideQuick: "1. Hızlı Başlangıç",
+                guideQ1: "Metni büyük metin kutusuna yapıştırın veya yazın.",
+                guideQ2: "Bir ses seçin ve konuşma hızını ayarlayın.",
+                guideQ3: "Ses Oluştur'a tıklayın ve birkaç saniye bekleyin.",
+                guideQ4: "Ses otomatik olarak çalar. Oynatıcı kontrolleriyle duraklatın veya tekrar oynatın.",
+                guideEnhance: "2. Metni Geliştir (Yapay Zeka Destekli)",
+                guideE1: "Metni Geliştir'e tıklayarak Gemini'nin yazınızı düzeltmesini sağlayın. Doğal noktalama işaretleri ekler, akışı düzeltir ve seslendirmeye daha uygun hale getirir. Geliştirilmiş metin, markdown işaretlerinden (yıldız, kalın, italik) otomatik olarak temizlenir, böylece TTS motoru düzgün okur.",
+                guideVoice: "3. Ses & Hız",
+                guideV1: "Ses: Amerikan/Britanya İngilizcesi veya Türkçe sesler arasından seçim yapın. Türkçe sesler Edge-TTS kullanır; İngilizce sesler Kokoro-82M kullanır.",
+                guideV2: "Hız: Kaydırıcıyı 0.5x (yavaş) ile 1.5x (hızlı) arasında ayarlayın. 1.0x doğal konuşma hızıdır.",
+                guideDownload: "4. İndirme",
+                guideD1: "Oluşturma sonrası MP3 İndir butonu görünür. Dosya adı, metin içeriğinize göre otomatik oluşturulur (örn. koprucu-hikayesi.mp3).",
+                guideTips: "5. İpuçları",
+                guideT1: "Maksimum metin uzunluğu 5.000 karakterdir.",
+                guideT2: "Sunucu soğuk başlangıcından sonraki ilk oluşturma ~15 saniye sürebilir. Sonraki istekler daha hızlıdır.",
+                guideT3: "Kırmızı bir hata mesajı görürseniz, metin girdiğinizi ve geçerli bir ses seçtiğinizi kontrol edin.",
+                guideT4: "Sağ üstteki açılır menüden dil değiştirebilirsiniz. Bu, arayüzü ve mevcut sesleri değiştirir.",
                 errEmpty: "Lütfen bir metin girin.",
                 errTooLong: "Metin çok uzun. Maksimum 5000 karakter.",
                 generating: "Ses oluşturuluyor... lütfen bekleyin (ilk yükleme 15sn sürebilir).",
@@ -236,6 +345,24 @@
             document.getElementById('enhanceBtn').innerText = t.enhanceBtn;
             document.getElementById('downloadMp3').innerText = t.downloadMp3;
             document.getElementById('t-footer').innerHTML = t.footer;
+            document.getElementById('g-title').innerText = t.guideTitle;
+            document.getElementById('g-quick').innerText = t.guideQuick;
+            document.getElementById('g-q1').innerText = t.guideQ1;
+            document.getElementById('g-q2').innerText = t.guideQ2;
+            document.getElementById('g-q3').innerText = t.guideQ3;
+            document.getElementById('g-q4').innerText = t.guideQ4;
+            document.getElementById('g-enhance').innerText = t.guideEnhance;
+            document.getElementById('g-e1').innerText = t.guideE1;
+            document.getElementById('g-voice').innerText = t.guideVoice;
+            document.getElementById('g-v1').innerText = t.guideV1;
+            document.getElementById('g-v2').innerText = t.guideV2;
+            document.getElementById('g-download').innerText = t.guideDownload;
+            document.getElementById('g-d1').innerText = t.guideD1;
+            document.getElementById('g-tips').innerText = t.guideTips;
+            document.getElementById('g-t1').innerText = t.guideT1;
+            document.getElementById('g-t2').innerText = t.guideT2;
+            document.getElementById('g-t3').innerText = t.guideT3;
+            document.getElementById('g-t4').innerText = t.guideT4;
             updateCharCount();
             populateVoices(currentLang);
         }
@@ -346,6 +473,17 @@
             statusEl.className = 'status ' + type;
             statusEl.style.display = msg ? 'block' : 'none';
         }
+        function openGuide() {
+            document.getElementById('guideModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeGuide() {
+            document.getElementById('guideModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeGuide();
+        });
     </script>
 </body>
 </html>
