@@ -21,13 +21,13 @@ from azure.keyvault.secrets import SecretClient
 app = FastAPI(title="Kokoro TTS Server")
 
 # Configure Azure Key Vault
-KEY_VAULT_NAME = os.environ.get("KEY_VAULT_NAME", "secondbrain-kokoro-kv")
+KEY_VAULT_NAME = os.environ.get("KEY_VAULT_NAME", "dp-kv-deliverypilot")
 KV_URI = f"https://{KEY_VAULT_NAME}.vault.azure.net"
 
 try:
     credential = DefaultAzureCredential()
     client = SecretClient(vault_url=KV_URI, credential=credential)
-    gemini_api_key = client.get_secret("GEMINI-API-KEY").value
+    gemini_api_key = client.get_secret("GEMINI-API-KEY-PRIMARY").value
 except Exception as e:
     print(f"Failed to connect to Azure Key Vault: {e}")
     gemini_api_key = os.environ.get("GEMINI_API_KEY", "")
