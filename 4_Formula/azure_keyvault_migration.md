@@ -101,3 +101,24 @@ flyctl secrets set \
 1. **Never Hardcode Credentials:** Use `DefaultAzureCredential` for a seamless transition between local dev (`az login`) and production (Service Principal).
 2. **Memory Caching:** Fetch secrets once on application startup and cache them in memory. Do not fetch from the Key Vault on every request to avoid latency and API limits.
 3. **Dash, Not Underscore:** Always remember the naming convention change (`FLY-API-TOKEN`, not `FLY_API_TOKEN`).
+
+---
+
+## 4. Security Architecture (Open Source Safety)
+
+Transitioning to Azure Key Vault ensures that an open-source repository can safely manage infrastructure and integrations without exposing critical credentials. Here is why this architecture is highly secure:
+
+1. **Zero-Trust Codebase:** 
+   No keys are ever stored in the codebase or even in local `.env` files (which are notoriously prone to accidental Git commits). The repository only contains the *logic* for fetching secrets, not the secrets themselves.
+
+2. **Identity-Based Access via `DefaultAzureCredential`:**
+   The code does not hold authentication strings. Instead, it delegates authentication to the execution environment. 
+   - **Locally:** It relies on the developer's `az login` token.
+   - **Production:** It relies on a securely injected Service Principal or Managed Identity.
+   Anyone cloning the public repository will simply encounter an `Unauthorized` or `SecretNotFound` error unless they belong to your Azure Active Directory (Entra ID) and have been explicitly granted access.
+
+3. **Strict Role-Based Access Control (RBAC):**
+   Having the code is not enough. To retrieve the `GEMINI-API-KEY-PRIMARY`, a user or service must be granted the specific **"Key Vault Secrets User"** role over that exact Key Vault instance. This creates a hard boundary between public code and private infrastructure.
+
+4. **Runtime Ephemerality:**
+   Secrets are retrieved directly into runtime memory during the application startup phase. They never touch the disk, protecting against local filesystem scraping or accidental logging.
