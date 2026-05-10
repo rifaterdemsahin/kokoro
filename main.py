@@ -15,11 +15,25 @@ import tempfile
 import asyncio
 import edge_tts
 import google.generativeai as genai
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 
 app = FastAPI(title="Kokoro TTS Server")
 
+# Configure Azure Key Vault
+KEY_VAULT_NAME = os.environ.get("KEY_VAULT_NAME", "secondbrain-kokoro-kv")
+KV_URI = f"https://{KEY_VAULT_NAME}.vault.azure.net"
+
+try:
+    credential = DefaultAzureCredential()
+    client = SecretClient(vault_url=KV_URI, credential=credential)
+    gemini_api_key = client.get_secret("GEMINI-API-KEY").value
+except Exception as e:
+    print(f"Failed to connect to Azure Key Vault: {e}")
+    gemini_api_key = os.environ.get("GEMINI_API_KEY", "")
+
 # Configure Gemini
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
+genai.configure(api_key=gemini_api_key)
 
 # ── Model Download ──────────────────────────────────────────────────
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "models")
