@@ -38,7 +38,15 @@ A dark-mode, bilingual (EN/TR) Text-to-Speech web app powered by **Kokoro-82M**,
 5. Click **Generate Audio**.
 6. Play, pause, or download the MP3.
 
-### API Endpoint
+### API — JSON (recommended)
+```bash
+curl -X POST https://secondbrain-kokoro.fly.dev/api/speak \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Hello world", "voice": "af_heart", "speed": 1.0}' \
+  --output hello.mp3
+```
+
+### API — Form-data (legacy)
 ```bash
 curl -X POST https://secondbrain-kokoro.fly.dev/tts \
   -F "text=Hello world" \
@@ -52,6 +60,116 @@ curl -X POST https://secondbrain-kokoro.fly.dev/tts \
 curl -X POST https://secondbrain-kokoro.fly.dev/enhance \
   -F "text=Hello world" \
   -F "lang=en"
+```
+
+---
+
+## 🔌 API Reference
+
+Base URL: `https://secondbrain-kokoro.fly.dev` (or `http://localhost:8080` locally)
+
+Interactive docs: [`/docs`](https://secondbrain-kokoro.fly.dev/docs) (Swagger UI)
+
+---
+
+### `POST /api/speak` — Text to Audio (JSON) ✨
+
+**The simplest way to get audio from text.**
+
+| Field | Type | Default | Notes |
+|-------|------|---------|-------|
+| `text` | string | **required** | Max 5,000 characters |
+| `voice` | string | `af_heart` | See voice table below |
+| `speed` | float | `1.0` | Range: `0.5` – `2.0` |
+
+**Response:** `audio/mpeg` binary stream (MP3)
+
+#### curl
+```bash
+curl -X POST https://secondbrain-kokoro.fly.dev/api/speak \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Hello world"}' \
+  --output speech.mp3
+```
+
+#### Python
+```python
+import requests
+
+response = requests.post(
+    "https://secondbrain-kokoro.fly.dev/api/speak",
+    json={"text": "Hello world", "voice": "af_heart", "speed": 1.0},
+)
+response.raise_for_status()
+with open("speech.mp3", "wb") as f:
+    f.write(response.content)
+```
+
+#### JavaScript / Node
+```js
+const res = await fetch("https://secondbrain-kokoro.fly.dev/api/speak", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ text: "Hello world", voice: "bf_emma", speed: 1.1 }),
+});
+const buffer = await res.arrayBuffer();
+require("fs").writeFileSync("speech.mp3", Buffer.from(buffer));
+```
+
+#### With a Turkish voice
+```bash
+curl -X POST https://secondbrain-kokoro.fly.dev/api/speak \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Merhaba dünya", "voice": "tr-TR-EmelNeural"}' \
+  --output merhaba.mp3
+```
+
+---
+
+### `GET /voices` — List Available Voices
+
+```bash
+curl https://secondbrain-kokoro.fly.dev/voices
+```
+
+```json
+{
+  "voices": {
+    "af_heart":  {"name": "American Female - Heart",  "gender": "female", "lang": "en-US"},
+    "af_bella":  {"name": "American Female - Bella",  "gender": "female", "lang": "en-US"},
+    "bf_emma":   {"name": "British Female - Emma",    "gender": "female", "lang": "en-GB"},
+    "bm_george": {"name": "British Male - George",    "gender": "male",   "lang": "en-GB"},
+    "tr-TR-EmelNeural": {"name": "TR Emel — Female (TR)", "gender": "female", "lang": "tr-TR"},
+    ...
+  }
+}
+```
+
+---
+
+### `POST /enhance` — AI Text Polish (Gemini)
+
+Improves phrasing and pacing before TTS generation.
+
+```bash
+curl -X POST https://secondbrain-kokoro.fly.dev/enhance \
+  -F "text=Hello world" \
+  -F "lang=en"
+# lang: "en" | "tr"
+```
+
+**Response:** `{"text": "Hello, world!"}`
+
+---
+
+### `GET /health` — Health Check
+
+```bash
+curl https://secondbrain-kokoro.fly.dev/health
+```
+
+```json
+{"status": "ok", "backend": "onnx", "voices_loaded": 9, ...}
 ```
 
 ---

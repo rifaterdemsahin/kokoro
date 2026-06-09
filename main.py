@@ -6,6 +6,7 @@ Kokoro TTS Server — Fixed version with runtime model download.
 from fastapi import FastAPI, Form, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 import io
 import os
 import re
@@ -215,6 +216,73 @@ async def tts(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+class SpeakRequest(BaseModel):
+    text: str = Field(..., max_length=5000, description="Text to convert to speech")
+    voice: str = Field("af_heart", description="Voice ID (see GET /voices)")
+    speed: float = Field(1.0, ge=0.5, le=2.0, description="Speech speed multiplier")
+
+
+@app.post("/api/speak", summary="Text-to-speech via JSON")
+async def api_speak(body: SpeakRequest):
+    """
+    Send JSON with `text`, optional `voice` and `speed`.
+    Returns an MP3 audio stream.
+
+    Example:
+        curl -X POST http://localhost:8080/api/speak \\
+          -H "Content-Type: application/json" \\
+          -d '{"text": "Hello world", "voice": "af_heart", "speed": 1.0}' \\
+          --output hello.mp3
+    """
+    if not body.text.strip():
+        raise HTTPException(status_code=400, detail="text must not be empty")
+    if body.voice not in VOICES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown voice '{body.voice}'. Call GET /voices for the list."
+        )
+
+    try:
+        if body.voice.startswith("tr-"):
+            rate_str = (
+                f"+{int((body.speed - 1.0) * 100)}%"
+                if body.speed >= 1.0
+                else f"{int((body.speed - 1.0) * 100)}%"
+            )
+            communicate = edge_tts.Communicate(body.text, body.voice, rate=rate_str)
+            buffer = io.BytesIO()
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    buffer.write(chunk["data"])
+            buffer.seek(0)
+            return StreamingResponse(buffer, media_type="audio/mpeg",
+                                     headers={"Content-Disposition": "attachment; filename=speech.mp3"})
+
+        pipe = init_pipeline()
+        if pipe is None:
+            raise HTTPException(status_code=503, detail="TTS engine failed to load. Check server logs.")
+
+        if KOKORO_BACKEND == "onnx":
+            samples, sample_rate = pipe.create(body.text, voice=body.voice, speed=body.speed)
+        elif KOKORO_BACKEND == "torch":
+            for _, _, audio in pipe(body.text, voice=body.voice, speed=body.speed):
+                samples = audio
+                sample_rate = 24000
+                break
+        else:
+            raise HTTPException(status_code=503, detail="No TTS backend available")
+
+        buffer = io.BytesIO()
+        sf.write(buffer, samples, sample_rate, format="MP3")
+        buffer.seek(0)
+        return StreamingResponse(buffer, media_type="audio/mpeg",
+                                 headers={"Content-Disposition": "attachment; filename=speech.mp3"})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/health")
 def health():
