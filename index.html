@@ -390,6 +390,39 @@
             speedValEl.textContent = speedEl.value + 'x';
         });
 
+        function applyQueryParams() {
+            const p = new URLSearchParams(window.location.search);
+
+            const lang = p.get('lang');
+            if (lang === 'tr' || lang === 'en') {
+                document.getElementById('uiLang').value = lang;
+                switchLang();
+            }
+
+            const text = p.get('text');
+            if (text) {
+                textEl.value = text;
+                updateCharCount();
+            }
+
+            const voice = p.get('voice');
+            if (voice) {
+                const opt = voiceEl.querySelector(`option[value="${CSS.escape(voice)}"]`);
+                if (opt) voiceEl.value = voice;
+            }
+
+            const speed = p.get('speed');
+            if (speed) {
+                const s = parseFloat(speed);
+                if (s >= 0.5 && s <= 1.5) {
+                    speedEl.value = s;
+                    speedValEl.textContent = s + 'x';
+                }
+            }
+        }
+
+        applyQueryParams();
+
         async function enhanceText() {
             const text = textEl.value.trim();
             const t = i18n[currentLang];
