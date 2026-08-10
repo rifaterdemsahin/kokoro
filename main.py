@@ -16,6 +16,7 @@ import tempfile
 import asyncio
 import edge_tts
 import google.generativeai as genai
+from google import genai as google_genai
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
@@ -35,6 +36,42 @@ except Exception as e:
 
 # Configure Gemini
 genai.configure(api_key=gemini_api_key)
+
+# google-genai client for the Gemini TTS ("Test Google API") button.
+# Uses the same key pulled from Key Vault / GEMINI_API_KEY above.
+_google_genai_client = None
+
+def get_google_genai_client():
+    global _google_genai_client
+    if _google_genai_client is None:
+        _google_genai_client = google_genai.Client(api_key=gemini_api_key)
+    return _google_genai_client
+
+GOOGLE_TTS_MODEL = "gemini-3.1-flash-tts-preview"
+GOOGLE_TTS_VOICES = {
+    "Kore": "Firm",
+    "Puck": "Upbeat",
+    "Charon": "Informative",
+    "Orus": "Firm",
+    "Leda": "Youthful",
+    "Fenrir": "Excitable",
+}
+
+def chunk_text_for_tts(text: str, max_chars: int = 1500) -> list[str]:
+    """Splits long text into paragraph-aware chunks to avoid model cutoffs."""
+    paragraphs = text.split("\n\n")
+    chunks = []
+    current = ""
+    for para in paragraphs:
+        if len(current) + len(para) <= max_chars:
+            current += para + "\n\n"
+        else:
+            if current:
+                chunks.append(current.strip())
+            current = para + "\n\n"
+    if current:
+        chunks.append(current.strip())
+    return chunks or [text]
 
 # ── Model Download ──────────────────────────────────────────────────
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "models")
@@ -104,11 +141,18 @@ VOICES = {
 with open("index.html", "r") as f:
     HTML_UI = f.read()
 
+with open("cost-comparison.html", "r") as f:
+    HTML_COST_COMPARISON = f.read()
+
 # ── Endpoints ───────────────────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)
 def index():
     return HTML_UI
+
+@app.get("/cost-comparison.html", response_class=HTMLResponse)
+def cost_comparison():
+    return HTML_COST_COMPARISON
 
 @app.get("/voices")
 def list_voices():
@@ -216,6 +260,52 @@ async def tts(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/tts-google")
+async def tts_google(
+    text: str = Form(..., max_length=5000),
+    voice: str = Form("Kore"),
+):
+    """Generate speech via Google's Gemini TTS (google-genai SDK) as an alternative
+    engine to self-hosted Kokoro. Reuses the same Gemini API key as /enhance."""
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="Text is required")
+    if voice not in GOOGLE_TTS_VOICES:
+        raise HTTPException(status_code=400, detail=f"Unknown Google voice: {voice}")
+
+    try:
+        import base64
+        import wave
+
+        client = get_google_genai_client()
+        chunks = chunk_text_for_tts(text)
+
+        buffer = io.BytesIO()
+        with wave.open(buffer, "wb") as wav_file:
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)
+            wav_file.setframerate(24000)
+            for chunk in chunks:
+                interaction = client.interactions.create(
+                    model=GOOGLE_TTS_MODEL,
+                    input=chunk,
+                    response_format={"type": "audio"},
+                    generation_config={"speech_config": [{"voice": voice}]},
+                )
+                pcm = base64.b64decode(interaction.output_audio.data)
+                wav_file.writeframes(pcm)
+
+        buffer.seek(0)
+        return StreamingResponse(
+            buffer,
+            media_type="audio/wav",
+            headers={"Content-Disposition": "attachment; filename=google-tts-audio.wav"}
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Google TTS error: {e}")
+
 
 class SpeakRequest(BaseModel):
     text: str = Field(..., max_length=5000, description="Text to convert to speech")

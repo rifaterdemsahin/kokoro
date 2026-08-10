@@ -47,6 +47,20 @@
         }
         button.gemini-btn:hover { opacity: 0.9; }
         button.gemini-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .google-test-row { display: flex; gap: 10px; margin-top: 12px; }
+        .google-test-row select {
+            flex: 1; background: #0f0f23; border: 1px solid #2a2a4a;
+            border-radius: 10px; padding: 10px 12px; color: #e0e0e0;
+            font-size: 0.85rem; cursor: pointer;
+        }
+        button.google-btn {
+            background: linear-gradient(90deg, #4285F4 0%, #34A853 50%, #FBBC05 75%, #EA4335 100%);
+            border: none; border-radius: 10px; padding: 10px 16px; color: #fff;
+            font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+        button.google-btn:hover { opacity: 0.9; }
+        button.google-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         textarea {
             width: 100%; min-height: 180px; background: #0f0f23;
             border: 1px solid #2a2a4a; border-radius: 10px; padding: 14px;
@@ -97,6 +111,9 @@
         }
         .download-row a:hover { background: #3a3a6a; }
         .footer { text-align: center; color: #555; font-size: 0.8rem; margin-top: 30px; }
+        .alt-note { text-align: center; color: #888; font-size: 0.85rem; margin-top: 16px; }
+        .alt-note a { color: #7ab8ff; text-decoration: none; }
+        .alt-note a:hover { text-decoration: underline; }
         .char-count { text-align: right; font-size: 0.8rem; color: #666; margin-top: 4px; }
         .help-btn {
             background: #2a2a4a; border: 1px solid #3a3a6a; color: #e0e0e0;
@@ -169,11 +186,23 @@
                 </div>
             </div>
             <button class="generate-btn" id="generateBtn" onclick="generateAudio()">Generate Audio</button>
+            <div class="google-test-row">
+                <select id="googleVoice">
+                    <option value="Kore">Kore — Firm</option>
+                    <option value="Puck">Puck — Upbeat</option>
+                    <option value="Charon">Charon — Informative</option>
+                    <option value="Orus">Orus — Firm</option>
+                    <option value="Leda">Leda — Youthful</option>
+                    <option value="Fenrir">Fenrir — Excitable</option>
+                </select>
+                <button class="google-btn" id="testGoogleBtn" onclick="testGoogleApi()">🧪 Test Google API</button>
+            </div>
             <div class="status" id="status"></div>
             <audio id="player" controls style="display:none;"></audio>
             <div class="download-row" id="downloadRow" style="display:none;">
                 <a id="downloadMp3" href="#" download="kokoro-audio.mp3">Download MP3</a>
             </div>
+            <p class="alt-note" id="t-alt">🪄 Prefer a fully-managed alternative? Try <a href="https://aistudio.google.com/generate-speech" target="_blank" rel="noopener">Google AI Studio ✨🔊</a> &middot; <a href="/cost-comparison.html">💰 Fly.io vs AI Studio cost comparison</a></p>
         </div>
         <div class="card" id="debugPanel">
             <div class="label-row">
@@ -250,8 +279,10 @@
                 fast: "Fast",
                 generateBtn: "Generate Audio",
                 enhanceBtn: "✨ Enhance Text",
+                testGoogleBtn: "🧪 Test Google API",
                 downloadMp3: "Download MP3",
                 footer: "Powered by Kokoro-82M &middot; Running on fly.io &middot; <a href=\"/voices\" style=\"color:#7ab8ff;\">API</a>",
+                altNote: "🪄 Prefer a fully-managed alternative? Try <a href=\"https://aistudio.google.com/generate-speech\" target=\"_blank\" rel=\"noopener\">Google AI Studio ✨🔊</a> &middot; <a href=\"cost-comparison.html\">💰 Fly.io vs AI Studio cost comparison</a>",
                 chars: "chars",
                 guideTitle: "📖 How to Use Kokoro TTS",
                 guideQuick: "1. Quick Start",
@@ -274,8 +305,10 @@
                 errEmpty: "Please enter some text.",
                 errTooLong: "Text too long. Max 5000 chars.",
                 generating: "Generating audio... please wait (first load may take 15s).",
+                generatingGoogle: "Calling Google's Gemini TTS API...",
                 enhancing: "Enhancing text with Gemini...",
                 success: "Audio ready! Playing now.",
+                successGoogle: "Audio ready via Google API! Playing now.",
                 error: "Error: "
             },
             tr: {
@@ -288,8 +321,10 @@
                 fast: "Hızlı",
                 generateBtn: "Ses Oluştur",
                 enhanceBtn: "✨ Metni Geliştir",
+                testGoogleBtn: "🧪 Google API'yi Test Et",
                 downloadMp3: "MP3 İndir",
                 footer: "Kokoro-82M tarafından desteklenmektedir &middot; fly.io üzerinde çalışıyor &middot; <a href=\"/voices\" style=\"color:#7ab8ff;\">API</a>",
+                altNote: "🪄 Tamamen yönetilen bir alternatif mi istiyorsunuz? <a href=\"https://aistudio.google.com/generate-speech\" target=\"_blank\" rel=\"noopener\">Google AI Studio'yu ✨🔊</a> deneyin &middot; <a href=\"cost-comparison.html\">💰 Fly.io ile AI Studio maliyet karşılaştırması</a>",
                 chars: "karakter",
                 guideTitle: "📖 Kokoro TTS Nasıl Kullanılır",
                 guideQuick: "1. Hızlı Başlangıç",
@@ -312,8 +347,10 @@
                 errEmpty: "Lütfen bir metin girin.",
                 errTooLong: "Metin çok uzun. Maksimum 5000 karakter.",
                 generating: "Ses oluşturuluyor... lütfen bekleyin (ilk yükleme 15sn sürebilir).",
+                generatingGoogle: "Google'ın Gemini TTS API'si çağrılıyor...",
                 enhancing: "Gemini ile metin geliştiriliyor...",
                 success: "Ses hazır! Şimdi çalınıyor.",
+                successGoogle: "Google API ile ses hazır! Şimdi çalınıyor.",
                 error: "Hata: "
             }
         };
@@ -343,8 +380,10 @@
             document.getElementById('t-fast').innerText = t.fast;
             document.getElementById('generateBtn').innerText = t.generateBtn;
             document.getElementById('enhanceBtn').innerText = t.enhanceBtn;
+            document.getElementById('testGoogleBtn').innerText = t.testGoogleBtn;
             document.getElementById('downloadMp3').innerText = t.downloadMp3;
             document.getElementById('t-footer').innerHTML = t.footer;
+            document.getElementById('t-alt').innerHTML = t.altNote;
             document.getElementById('g-title').innerText = t.guideTitle;
             document.getElementById('g-quick').innerText = t.guideQuick;
             document.getElementById('g-q1').innerText = t.guideQ1;
@@ -372,6 +411,8 @@
         const speedValEl = document.getElementById('speedVal');
         const btn = document.getElementById('generateBtn');
         const enhanceBtn = document.getElementById('enhanceBtn');
+        const googleBtn = document.getElementById('testGoogleBtn');
+        const googleVoiceEl = document.getElementById('googleVoice');
         const statusEl = document.getElementById('status');
         const player = document.getElementById('player');
         const downloadRow = document.getElementById('downloadRow');
@@ -520,6 +561,47 @@
                 enhanceBtn.disabled = false;
             }
         }
+        async function testGoogleApi() {
+            const text = textEl.value.trim();
+            const t = i18n[currentLang];
+            if (!text) { showStatus(t.errEmpty, 'error'); return; }
+            if (text.length > 5000) { showStatus(t.errTooLong, 'error'); return; }
+
+            btn.disabled = true;
+            enhanceBtn.disabled = true;
+            googleBtn.disabled = true;
+            showStatus(t.generatingGoogle, 'loading');
+            player.style.display = 'none'; downloadRow.style.display = 'none';
+
+            try {
+                const formData = new FormData();
+                formData.append('text', text);
+                formData.append('voice', googleVoiceEl.value);
+
+                const response = await fetch('/tts-google', { method: 'POST', body: formData });
+                if (!response.ok) {
+                    const detail = await parseError(response);
+                    throw new Error(`[${response.status}] ${detail}`);
+                }
+
+                const blob = await response.blob();
+                if (blob.size === 0) throw new Error('Server returned empty audio — check server logs.');
+                const url = URL.createObjectURL(blob);
+                player.src = url; player.style.display = 'block'; player.play();
+                downloadMp3.href = url;
+                downloadMp3.download = 'google-tts-audio.wav';
+                downloadRow.style.display = 'flex';
+                showStatus(t.successGoogle, 'success');
+            } catch (err) {
+                showStatus(t.error + err.message, 'error');
+                console.error('[tts-google]', err);
+            } finally {
+                btn.disabled = false;
+                enhanceBtn.disabled = false;
+                googleBtn.disabled = false;
+            }
+        }
+
         function showStatus(msg, type) {
             statusEl.textContent = msg;
             statusEl.className = 'status ' + type;

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cost Comparison — Fly.io vs Google AI Studio</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0f0f23; color: #e0e0e0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .container { width: 100%; max-width: 860px; }
+        .back-link { display: inline-block; margin-bottom: 16px; color: #7ab8ff; text-decoration: none; font-size: 0.9rem; }
+        .back-link:hover { text-decoration: underline; }
+        h1 {
+            font-size: 2rem; margin-bottom: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle { color: #888; margin-bottom: 28px; font-size: 0.95rem; }
+        .card {
+            background: #1a1a2e; border-radius: 16px; padding: 28px;
+            margin-bottom: 20px; border: 1px solid #2a2a4a;
+        }
+        h2 { font-size: 1.2rem; margin-bottom: 12px; color: #a0a0c0; }
+        h2 .emoji { margin-right: 6px; }
+        p { font-size: 0.95rem; line-height: 1.7; color: #ccc; margin-bottom: 10px; }
+        .callout {
+            background: #0f0f23; border: 1px solid #2a2a4a; border-radius: 10px;
+            padding: 14px 18px; margin: 14px 0; font-size: 0.9rem; color: #bbb;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.88rem; }
+        th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #2a2a4a; vertical-align: top; }
+        th { color: #a0a0c0; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; }
+        td.fly { color: #7ab8ff; }
+        td.gai { color: #93f9b9; }
+        tr:last-child td { border-bottom: none; }
+        .table-wrap { overflow-x: auto; }
+        .badge {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 600; margin-right: 6px;
+        }
+        .badge.fly { background: rgba(122,184,255,0.15); color: #7ab8ff; }
+        .badge.gai { background: rgba(147,249,185,0.15); color: #93f9b9; }
+        a.link-btn {
+            display: inline-block; margin: 10px 8px 0 0; padding: 10px 18px;
+            border-radius: 8px; background: #2a2a4a; color: #e0e0e0;
+            text-decoration: none; font-size: 0.9rem; transition: background 0.2s;
+        }
+        a.link-btn:hover { background: #3a3a6a; }
+        a.link-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff;
+        }
+        .sources { font-size: 0.8rem; color: #666; margin-top: 6px; }
+        .sources a { color: #7ab8ff; text-decoration: none; }
+        .sources a:hover { text-decoration: underline; }
+        .footer { text-align: center; color: #555; font-size: 0.8rem; margin-top: 30px; }
+        .footer a { color: #7ab8ff; text-decoration: none; }
+        code {
+            background: #0f0f23; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; color: #7ab8ff;
+        }
+        @media (max-width: 600px) { table { font-size: 0.8rem; } th, td { padding: 8px 6px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a class="back-link" href="/">&larr; Back to Kokoro TTS</a>
+        <h1>💰 Cost Comparison</h1>
+        <p class="subtitle">Self-hosting Kokoro-82M on Fly.io vs. calling Google's Gemini TTS through <a href="https://aistudio.google.com/generate-speech" target="_blank" rel="noopener" style="color:#7ab8ff;">AI Studio ✨🔊</a></p>
+
+        <div class="card">
+            <h2><span class="emoji">📊</span>At a glance</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Dimension</th><th><span class="badge fly">Fly.io</span>self-hosted Kokoro</th><th><span class="badge gai">Google AI Studio</span>Gemini TTS</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Pricing model</td>
+                            <td class="fly">Pay for compute time (per-second billing)</td>
+                            <td class="gai">Pay per token (text in / audio out)</td>
+                        </tr>
+                        <tr>
+                            <td>This app's config</td>
+                            <td class="fly"><code>shared-cpu-2x</code>, 2GB RAM, region <code>lhr</code>, scales to zero (<code>min_machines_running = 0</code>)</td>
+                            <td class="gai">Gemini 2.5 Flash Preview TTS (used for the ✨ Enhance step already)</td>
+                        </tr>
+                        <tr>
+                            <td>Free tier</td>
+                            <td class="fly">Legacy accounts: up to 3× <code>shared-cpu-1x</code> 256MB VMs free; new accounts pay from machine #1</td>
+                            <td class="gai">AI Studio UI usage is free; Flash TTS API has a free (rate-limited) tier</td>
+                        </tr>
+                        <tr>
+                            <td>Compute/API rate</td>
+                            <td class="fly">≈ $0.0164–$0.0191/hr for 2 shared vCPUs + 2GB (≈ $12–$14/mo if run 24/7)</td>
+                            <td class="gai">Flash: $0.50 / 1M input (text) tokens + $10.00 / 1M output (audio) tokens</td>
+                        </tr>
+                        <tr>
+                            <td>Idle cost</td>
+                            <td class="fly">$0 — machine auto-stops when no requests come in</td>
+                            <td class="gai">$0 — no request, no charge</td>
+                        </tr>
+                        <tr>
+                            <td>Cold start</td>
+                            <td class="fly">~15s on first request after idle (noted in this app's own guide)</td>
+                            <td class="gai">None — always-on managed API</td>
+                        </tr>
+                        <tr>
+                            <td>Scaling behavior</td>
+                            <td class="fly">Flat-ish cost regardless of volume once a machine is kept warm; you manage capacity</td>
+                            <td class="gai">Cost grows linearly with characters spoken; Google manages capacity</td>
+                        </tr>
+                        <tr>
+                            <td>Ops effort</td>
+                            <td class="fly">You own the Docker image, Fly deploys, secrets via Doppler, uptime</td>
+                            <td class="gai">Zero infra — call the API or use the AI Studio playground directly</td>
+                        </tr>
+                        <tr>
+                            <td>Data control</td>
+                            <td class="fly">Runs on your own Fly machine — text/audio never leaves your infra</td>
+                            <td class="gai">Text and audio pass through Google's API</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="sources">Sources: <a href="https://fly.io/docs/about/pricing/" target="_blank" rel="noopener">fly.io/docs/about/pricing</a> &middot; <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener">ai.google.dev/gemini-api/docs/pricing</a></p>
+        </div>
+
+        <div class="card">
+            <h2><span class="emoji">🧮</span>Worked example</h2>
+            <p>Say you generate roughly <strong>100,000 characters</strong> (≈ a short book) of speech in a month.</p>
+            <div class="callout">
+                <strong>Fly.io (this app):</strong> cost is driven by machine-seconds, not characters. Kokoro-82M generates audio in a few seconds per request, so 100k characters spread across normal-sized requests is typically a few minutes of total compute — often just cents, thanks to scale-to-zero. If you instead pin <code>min_machines_running = 1</code> to avoid cold starts, you pay the flat ≈ $12–$14/mo regardless of how much (or little) you generate.
+            </div>
+            <div class="callout">
+                <strong>Google AI Studio / Gemini API:</strong> ≈100,000 characters is roughly 25,000 input tokens → ≈ <strong>$0.0125</strong> in text-input cost on Flash TTS. The dominant cost is the <em>audio output</em> tokens ($10.00 / 1M), which scale with spoken duration rather than character count — so the total depends on pacing and voice. Use the <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener">official pricing page</a> to model your exact duration, or just generate for free inside the <a href="https://aistudio.google.com/generate-speech" target="_blank" rel="noopener">AI Studio playground ✨🔊</a> first.
+            </div>
+            <p><strong>Rule of thumb:</strong> for occasional/low-volume speech generation, Google AI Studio's free tier and pay-per-character API are cheaper and require zero ops. For steady, high-volume, or privacy-sensitive workloads, a scale-to-zero Fly.io deployment like this one flattens cost and keeps data in your own infra.</p>
+        </div>
+
+        <div class="card">
+            <h2><span class="emoji">🔗</span>Try it / verify pricing</h2>
+            <a class="link-btn primary" href="https://aistudio.google.com/generate-speech" target="_blank" rel="noopener">✨🔊 Google AI Studio — Generate Speech</a>
+            <a class="link-btn" href="https://fly.io/docs/about/pricing/" target="_blank" rel="noopener">🪰 Fly.io Pricing Docs</a>
+            <a class="link-btn" href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener">🤖 Gemini API Pricing Docs</a>
+            <a class="link-btn" href="/">🎙️ Back to Kokoro TTS</a>
+        </div>
+
+        <p class="footer">Powered by Kokoro-82M &middot; Running on <a href="https://fly.io" target="_blank" rel="noopener">fly.io</a> &middot; Prices as of Aug 2026, preview models may change — always check official pricing pages.</p>
+    </div>
+</body>
+</html>
