@@ -165,6 +165,35 @@
             </div>
         </div>
 
+        <!-- 1b. How to use the extension (step by step) -->
+        <div class="card">
+            <h2>📖 How to Use the Chrome Extension with Kokoro (Step by Step)</h2>
+            <p>This is what it looks like when it's working: highlight text on any page and the extension's reader panel (top-right) reads it aloud with a Kokoro voice. It shows a progress bar, the time left, and Pause / Prev / Next / Volume / Speed controls.</p>
+            <img src="/chrome-extension-reader.jpg" alt="Chrome extension reader panel reading highlighted text with Kokoro TTS"
+                 style="width:100%; border-radius:10px; border:1px solid #2a2a4a; margin:8px 0 14px;">
+            <ol>
+                <li><strong>Start a Kokoro backend.</strong> Pick one:
+                    <ul>
+                        <li>🐳 Docker (fastest): <code>docker start kokoro-tts</code> → <code>http://127.0.0.1:8880/v1</code></li>
+                        <li>🖥 This app locally: <code>PORT=30088 venv/bin/python main.py</code> → <code>http://127.0.0.1:30088/v1</code></li>
+                        <li>☁️ Nothing to start: use Fly.io → <code>https://secondbrain-kokoro.fly.dev/v1</code> (the first call may take a few seconds while the machine wakes up)</li>
+                    </ul>
+                </li>
+                <li><strong>Check it here first.</strong> In the <em>Live API Tester</em> below, choose the same URL and click <strong>🔊 Test /v1/audio/speech</strong>. If you hear audio, the extension will work too.</li>
+                <li><strong>Open the extension's settings</strong> (puzzle-piece icon 🧩 in the toolbar → your TTS extension → <em>Options</em>/<em>Settings</em>) and choose the <em>OpenAI-compatible</em> / <em>Custom API</em> provider.</li>
+                <li><strong>Fill in the fields:</strong> Base URL = one of the URLs above · API Key = <code>not-needed</code> · Model = <code>kokoro</code> (or <code>tts-1</code>) · Voice = <code>af_heart</code> · Format = <code>mp3</code>. Then save.</li>
+                <li><strong>Read something:</strong> highlight text on any web page, then right-click → <em>Read aloud</em>, or click the extension icon / use its keyboard shortcut. The reader panel opens and starts speaking.</li>
+                <li><strong>Control playback</strong> from the panel: Pause, Prev/Next sentence, volume slider, and speed (e.g. <code>1.0x</code>).</li>
+            </ol>
+            <h3>🛠 If it doesn't speak</h3>
+            <ul>
+                <li><strong>"Failed to fetch" / connection refused</strong> → the backend isn't running. Run <code>docker ps --filter name=kokoro-tts</code>, or switch to the Fly.io URL.</li>
+                <li><strong>Blocked on HTTPS sites</strong> → some extensions won't call <code>http://</code> from HTTPS pages. Use <code>https://secondbrain-kokoro.fly.dev/v1</code>.</li>
+                <li><strong>404 Not Found</strong> → the path got doubled up. Base URL should end in <code>/v1</code>. Only use the full <code>/v1/audio/speech</code> if the field asks for the "speech endpoint".</li>
+                <li><strong>Voice error</strong> → use a Kokoro voice ID (<code>af_heart</code>) or an OpenAI name (<code>alloy</code>, <code>nova</code>…). Turkish (<code>tr-TR-EmelNeural</code>) works only on port 30088 / Fly.io, not Docker.</li>
+            </ul>
+        </div>
+
         <!-- 2. Chrome Extension Settings Table -->
         <div class="card">
             <h2>⚙️ What to Paste into Your Chrome Extension</h2>

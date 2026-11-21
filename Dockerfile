@@ -12,6 +12,7 @@ COPY index.html .
 COPY cost-comparison.html .
 COPY chrome-extension.html .
 COPY main.py .
+COPY 3_Simulation/chrome-extension-reader.jpg 3_Simulation/chrome-extension-reader.jpg
 
 ENV PORT=8080
 CMD ["python", "main.py"]

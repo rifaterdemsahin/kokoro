@@ -180,6 +180,12 @@ def cost_comparison():
 def chrome_extension_guide():
     return HTML_CHROME_EXTENSION
 
+@app.get("/chrome-extension-reader.jpg", include_in_schema=False)
+def chrome_extension_screenshot():
+    from fastapi.responses import FileResponse
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "3_Simulation", "chrome-extension-reader.jpg")
+    return FileResponse(path, media_type="image/jpeg")
+
 @app.get("/voices")
 def list_voices():
     return {"voices": VOICES}
