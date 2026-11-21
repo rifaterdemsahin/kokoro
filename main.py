@@ -22,6 +22,14 @@ from azure.keyvault.secrets import SecretClient
 
 app = FastAPI(title="Kokoro TTS Server")
 
+# Browsers on GitHub Pages / Steam Deck need CORS to call /voices and /api/speak.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Configure Azure Key Vault
 KEY_VAULT_NAME = os.environ.get("KEY_VAULT_NAME", "dp-kv-deliverypilot")
 KV_URI = f"https://{KEY_VAULT_NAME}.vault.azure.net"
@@ -144,6 +152,19 @@ with open("index.html", "r") as f:
 with open("cost-comparison.html", "r") as f:
     HTML_COST_COMPARISON = f.read()
 
+with open("chrome-extension.html", "r") as f:
+    HTML_CHROME_EXTENSION = f.read()
+
+# OpenAI default voice aliases -> Kokoro voices so extensions work out of the box
+OPENAI_VOICE_MAP = {
+    "alloy": "af_heart",
+    "echo": "am_adam",
+    "fable": "bf_emma",
+    "onyx": "bm_george",
+    "nova": "af_bella",
+    "shimmer": "af_nicole",
+}
+
 # ── Endpoints ───────────────────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)
@@ -153,6 +174,11 @@ def index():
 @app.get("/cost-comparison.html", response_class=HTMLResponse)
 def cost_comparison():
     return HTML_COST_COMPARISON
+
+@app.get("/chrome-extension.html", response_class=HTMLResponse)
+@app.get("/chrome-extension", response_class=HTMLResponse)
+def chrome_extension_guide():
+    return HTML_CHROME_EXTENSION
 
 @app.get("/voices")
 def list_voices():
@@ -368,6 +394,93 @@ async def api_speak(body: SpeakRequest):
         buffer.seek(0)
         return StreamingResponse(buffer, media_type="audio/mpeg",
                                  headers={"Content-Disposition": "attachment; filename=speech.mp3"})
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class OpenAISpeechRequest(BaseModel):
+    model: str = Field("kokoro", description="Model ID (kokoro, tts-1, tts-1-hd)")
+    input: str = Field(..., max_length=5000, description="Text to convert to speech")
+    voice: str = Field("af_heart", description="Kokoro or OpenAI voice ID")
+    response_format: str = Field("mp3", description="Audio format: mp3, wav, opus, flac")
+    speed: float = Field(1.0, ge=0.25, le=4.0, description="Speech speed multiplier")
+
+
+@app.get("/v1/models", summary="OpenAI-compatible models list")
+def v1_models():
+    return {
+        "object": "list",
+        "data": [
+            {"id": "kokoro", "object": "model", "created": 1686935002, "owned_by": "kokoro"},
+            {"id": "tts-1", "object": "model", "created": 1686935002, "owned_by": "kokoro"},
+            {"id": "tts-1-hd", "object": "model", "created": 1686935002, "owned_by": "kokoro"},
+        ],
+    }
+
+
+@app.get("/v1/audio/voices", summary="OpenAI/Kokoro-FastAPI compatible voices list")
+def v1_voices():
+    return {"voices": list(VOICES.keys())}
+
+
+@app.post("/v1/audio/speech", summary="OpenAI-compatible Text-to-Speech")
+async def v1_audio_speech(body: OpenAISpeechRequest):
+    if not body.input.strip():
+        raise HTTPException(status_code=400, detail="input must not be empty")
+
+    voice = OPENAI_VOICE_MAP.get(body.voice, body.voice)
+    if voice not in VOICES:
+        voice = "af_heart"
+
+    speed = max(0.5, min(2.0, body.speed))
+    fmt = body.response_format.lower()
+    format_map = {
+        "mp3": ("MP3", "audio/mpeg", "mp3"),
+        "wav": ("WAV", "audio/wav", "wav"),
+        "flac": ("FLAC", "audio/flac", "flac"),
+        "opus": ("OGG", "audio/ogg", "ogg"),
+    }
+    sf_fmt, media_type, ext = format_map.get(fmt, ("MP3", "audio/mpeg", "mp3"))
+
+    try:
+        if voice.startswith("tr-"):
+            rate_str = f"+{int((speed - 1.0) * 100)}%" if speed >= 1.0 else f"{int((speed - 1.0) * 100)}%"
+            communicate = edge_tts.Communicate(body.input, voice, rate=rate_str)
+            buffer = io.BytesIO()
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    buffer.write(chunk["data"])
+            buffer.seek(0)
+            return StreamingResponse(
+                buffer,
+                media_type="audio/mpeg",
+                headers={"Content-Disposition": "attachment; filename=speech.mp3"},
+            )
+
+        pipe = init_pipeline()
+        if pipe is None:
+            raise HTTPException(status_code=503, detail="TTS engine failed to load. Check server logs.")
+
+        if KOKORO_BACKEND == "onnx":
+            samples, sample_rate = pipe.create(body.input, voice=voice, speed=speed)
+        elif KOKORO_BACKEND == "torch":
+            for _, _, audio in pipe(body.input, voice=voice, speed=speed):
+                samples = audio
+                sample_rate = 24000
+                break
+        else:
+            raise HTTPException(status_code=503, detail="No TTS backend available")
+
+        buffer = io.BytesIO()
+        sf.write(buffer, samples, sample_rate, format=sf_fmt)
+        buffer.seek(0)
+        return StreamingResponse(
+            buffer,
+            media_type=media_type,
+            headers={"Content-Disposition": f"attachment; filename=speech.{ext}"},
+        )
     except HTTPException:
         raise
     except Exception as e:

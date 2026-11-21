@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kokoro TTS — API URL &amp; Chrome Extension Guide</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0f0f23; color: #e0e0e0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .container { width: 100%; max-width: 860px; }
+        .top-nav {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px; flex-wrap: wrap; gap: 10px;
+        }
+        .back-link { color: #7ab8ff; text-decoration: none; font-size: 0.9rem; }
+        .back-link:hover { text-decoration: underline; }
+        h1 {
+            font-size: 2rem; margin-bottom: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle { color: #888; margin-bottom: 24px; font-size: 0.95rem; line-height: 1.5; }
+        .card {
+            background: #1a1a2e; border-radius: 16px; padding: 26px;
+            margin-bottom: 20px; border: 1px solid #2a2a4a;
+        }
+        h2 { font-size: 1.2rem; margin-bottom: 14px; color: #c4c4e4; display: flex; align-items: center; gap: 8px; }
+        h3 { font-size: 0.98rem; margin: 16px 0 8px; color: #a0a0c0; }
+        p { font-size: 0.93rem; line-height: 1.65; color: #ccc; margin-bottom: 10px; }
+        ul, ol { margin-left: 20px; margin-bottom: 10px; }
+        li { font-size: 0.92rem; line-height: 1.65; color: #ccc; margin-bottom: 6px; }
+        code {
+            background: #0f0f23; padding: 2px 7px; border-radius: 5px;
+            font-size: 0.85rem; color: #7ab8ff; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        pre {
+            background: #0f0f23; border: 1px solid #2a2a4a; border-radius: 10px;
+            padding: 14px 16px; overflow-x: auto; font-size: 0.84rem; line-height: 1.55;
+            color: #d6e4ff; margin: 10px 0; position: relative;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        .url-box {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            background: #0f0f23; border: 1px solid #2a2a4a; border-radius: 10px;
+            padding: 12px 14px; margin-bottom: 12px; flex-wrap: wrap;
+        }
+        .url-box.primary { border-color: #667eea; background: rgba(102, 126, 234, 0.08); }
+        .url-meta { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 240px; }
+        .url-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; color: #a0a0c0; }
+        .url-value {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.96rem; color: #93f9b9; word-break: break-all;
+        }
+        .url-desc { font-size: 0.82rem; color: #888; }
+        .btn-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        button.copy-btn, button.action-btn {
+            background: #2a2a4a; border: 1px solid #3a3a6a; color: #e0e0e0;
+            padding: 8px 14px; border-radius: 8px; cursor: pointer;
+            font-size: 0.84rem; font-weight: 600; transition: all 0.15s;
+        }
+        button.copy-btn:hover, button.action-btn:hover { background: #3a3a6a; }
+        button.copy-btn.copied { background: #1a3a2a; border-color: #34d399; color: #6ee7b7; }
+        button.action-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none; color: #fff;
+        }
+        button.action-btn.primary:hover { opacity: 0.92; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .badge {
+            display: inline-block; padding: 2px 9px; border-radius: 20px;
+            font-size: 0.72rem; font-weight: 600; margin-left: 6px; vertical-align: middle;
+        }
+        .badge.docker { background: rgba(147, 249, 185, 0.15); color: #93f9b9; }
+        .badge.local { background: rgba(122, 184, 255, 0.15); color: #7ab8ff; }
+        .badge.cloud { background: rgba(196, 181, 253, 0.15); color: #c4b5fd; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.88rem; }
+        th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #2a2a4a; vertical-align: top; }
+        th { color: #a0a0c0; text-transform: uppercase; font-size: 0.74rem; letter-spacing: 0.5px; }
+        tr:last-child td { border-bottom: none; }
+        .table-wrap { overflow-x: auto; }
+        .tester-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;
+        }
+        .tester-grid label {
+            display: block; font-size: 0.78rem; text-transform: uppercase;
+            letter-spacing: 0.5px; color: #a0a0c0; margin-bottom: 6px;
+        }
+        select, input[type="text"] {
+            width: 100%; background: #0f0f23; border: 1px solid #2a2a4a;
+            border-radius: 8px; padding: 10px 12px; color: #e0e0e0; font-size: 0.9rem;
+        }
+        select:focus, input[type="text"]:focus { outline: none; border-color: #667eea; }
+        .status {
+            margin-top: 12px; padding: 12px 14px; border-radius: 10px;
+            font-size: 0.88rem; display: none; line-height: 1.5;
+        }
+        .status.loading { display: block; background: #1a2a4a; color: #7ab8ff; }
+        .status.success { display: block; background: #1a3a2a; color: #6ee7b7; }
+        .status.error   { display: block; background: #3a1a1a; color: #ff7a7a; }
+        audio { width: 100%; margin-top: 12px; border-radius: 8px; }
+        .footer { text-align: center; color: #666; font-size: 0.8rem; margin-top: 26px; }
+        .footer a { color: #7ab8ff; text-decoration: none; }
+        @media (max-width: 600px) {
+            .tester-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-nav">
+            <a class="back-link" href="/">&larr; Back to Kokoro TTS</a>
+            <div class="btn-row">
+                <a class="back-link" href="/cost-comparison.html">💰 Cost Comparison</a>
+                <a class="back-link" href="/docs">📘 Swagger API Docs</a>
+            </div>
+        </div>
+
+        <h1>🧩 Kokoro API URL &amp; Chrome Extension Guide</h1>
+        <p class="subtitle">Connect your running Docker Kokoro container (or Fly.io cloud endpoint) to any OpenAI-compatible Chrome TTS extension in 30 seconds.</p>
+
+        <!-- 1. Ready-to-use API URLs -->
+        <div class="card">
+            <h2>🔗 Your Unique Kokoro API URLs</h2>
+            <p>Copy one of the OpenAI-compatible Base URLs below and paste it into your Chrome extension's <strong>API Base URL / Endpoint</strong> field.</p>
+
+            <div class="url-box primary">
+                <div class="url-meta">
+                    <span class="url-label">1. Local Docker (kokoro-tts) <span class="badge docker">RECOMMENDED &middot; FASTEST</span></span>
+                    <span class="url-value" id="url-docker">http://127.0.0.1:8880/v1/</span>
+                    <span class="url-desc">Runs offline on your Mac via Docker (<code>ghcr.io/remsky/kokoro-fastapi-cpu</code>) &middot; 67 voices &middot; zero latency.</span>
+                </div>
+                <div class="btn-row">
+                    <button class="copy-btn" onclick="copyText('http://127.0.0.1:8880/v1/', this)">📋 Copy Base URL</button>
+                    <button class="copy-btn" onclick="copyText('http://127.0.0.1:8880/v1/audio/speech', this)">📋 Copy /speech</button>
+                </div>
+            </div>
+
+            <div class="url-box">
+                <div class="url-meta">
+                    <span class="url-label">2. Local Kokoro App (This Server) <span class="badge local">PORT 30088 &middot; EN + TR</span></span>
+                    <span class="url-value" id="url-local">http://127.0.0.1:30088/v1/</span>
+                    <span class="url-desc">Local FastAPI app from this repo &middot; supports Kokoro English + Turkish Edge-TTS + OpenAI <code>/v1/audio/speech</code>.</span>
+                </div>
+                <div class="btn-row">
+                    <button class="copy-btn" onclick="copyText('http://127.0.0.1:30088/v1/', this)">📋 Copy Base URL</button>
+                    <button class="copy-btn" onclick="copyText('http://127.0.0.1:30088/v1/audio/speech', this)">📋 Copy /speech</button>
+                </div>
+            </div>
+
+            <div class="url-box">
+                <div class="url-meta">
+                    <span class="url-label">3. Cloud Kokoro (Fly.io) <span class="badge cloud">WORKS ANYWHERE</span></span>
+                    <span class="url-value" id="url-cloud">https://secondbrain-kokoro.fly.dev/v1/</span>
+                    <span class="url-desc">Hosted on Fly.io &middot; works even when Docker is off &middot; HTTPS ready for strict Chrome extensions.</span>
+                </div>
+                <div class="btn-row">
+                    <button class="copy-btn" onclick="copyText('https://secondbrain-kokoro.fly.dev/v1/', this)">📋 Copy Base URL</button>
+                    <button class="copy-btn" onclick="copyText('https://secondbrain-kokoro.fly.dev/v1/audio/speech', this)">📋 Copy /speech</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Chrome Extension Settings Table -->
+        <div class="card">
+            <h2>⚙️ What to Paste into Your Chrome Extension</h2>
+            <p>Most Chrome TTS extensions (such as <strong>Read Aloud</strong>, <strong>Kokoro TTS Reader</strong>, <strong>OpenAI TTS</strong>, or custom sidebar readers) ask for an OpenAI-compatible TTS configuration:</p>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Extension Field</th><th>Value to Enter</th><th>Notes</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>API Base URL</strong></td>
+                            <td><code>http://127.0.0.1:8880/v1</code></td>
+                            <td>Use <code>http://127.0.0.1:8880/v1/</code> (or without trailing slash depending on extension). If the extension asks for the full speech path, use <code>http://127.0.0.1:8880/v1/audio/speech</code>.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>API Key</strong></td>
+                            <td><code>not-needed</code></td>
+                            <td>Local Docker &amp; Fly.io do not require an OpenAI key. Enter any non-empty string if the field is required.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Model</strong></td>
+                            <td><code>kokoro</code> or <code>tts-1</code></td>
+                            <td>Both <code>kokoro</code>, <code>tts-1</code>, and <code>tts-1-hd</code> are accepted.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Voice</strong></td>
+                            <td><code>af_heart</code></td>
+                            <td>Popular voices: <code>af_heart</code>, <code>af_bella</code>, <code>am_adam</code>, <code>bf_emma</code>, <code>bm_george</code>. OpenAI names like <code>alloy</code> also auto-map on this server.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Response Format</strong></td>
+                            <td><code>mp3</code></td>
+                            <td>Also supports <code>wav</code>, <code>opus</code>, <code>flac</code>.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Speed</strong></td>
+                            <td><code>1.0</code></td>
+                            <td>Range <code>0.5</code> – <code>2.0</code>.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <h3>💡 Quick Tips for Chrome Extensions</h3>
+            <ul>
+                <li><strong>Use <code>127.0.0.1</code> instead of <code>localhost</code></strong> to avoid IPv6 resolution hiccups in Chrome.</li>
+                <li>If an extension refuses <code>http://</code> (mixed-content restriction on HTTPS pages), switch the Base URL to your Fly.io HTTPS URL: <code>https://secondbrain-kokoro.fly.dev/v1/</code>.</li>
+                <li>Docker Kokoro also includes its own built-in web UI at <a href="http://127.0.0.1:8880/web/" target="_blank" rel="noopener" style="color:#7ab8ff;">http://127.0.0.1:8880/web/</a>.</li>
+            </ul>
+        </div>
+
+        <!-- 3. Live API Tester -->
+        <div class="card">
+            <h2>🧪 Live API Tester (Verify Before Pasting into Extension)</h2>
+            <p>Test your API URL directly from Chrome right now.</p>
+            <div class="tester-grid">
+                <div>
+                    <label for="apiBase">Target API Base URL</label>
+                    <select id="apiBase">
+                        <option value="http://127.0.0.1:8880/v1">Local Docker — http://127.0.0.1:8880/v1</option>
+                        <option value="http://127.0.0.1:30088/v1">Local Kokoro App — http://127.0.0.1:30088/v1</option>
+                        <option value="https://secondbrain-kokoro.fly.dev/v1">Cloud Fly.io — https://secondbrain-kokoro.fly.dev/v1</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="testVoice">Voice</label>
+                    <select id="testVoice">
+                        <option value="af_heart">af_heart (US Female)</option>
+                        <option value="af_bella">af_bella (US Female)</option>
+                        <option value="am_adam">am_adam (US Male)</option>
+                        <option value="bf_emma">bf_emma (UK Female)</option>
+                        <option value="bm_george">bm_george (UK Male)</option>
+                        <option value="tr-TR-EmelNeural">tr-TR-EmelNeural (Turkish — App/Fly.io)</option>
+                    </select>
+                </div>
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label for="testText" style="display:block; font-size:0.78rem; text-transform:uppercase; letter-spacing:0.5px; color:#a0a0c0; margin-bottom:6px;">Sample Text</label>
+                <input type="text" id="testText" value="Hello! Kokoro API is connected and ready for your Chrome extension.">
+            </div>
+            <div class="btn-row">
+                <button class="action-btn" id="checkBtn" onclick="testConnection()">🔍 Check /v1/models &amp; Voices</button>
+                <button class="action-btn primary" id="speakBtn" onclick="testSpeak()">🔊 Test /v1/audio/speech</button>
+            </div>
+            <div class="status" id="testStatus"></div>
+            <audio id="testPlayer" controls style="display:none;"></audio>
+        </div>
+
+        <!-- 4. Docker & Curl Reference -->
+        <div class="card">
+            <h2>🐳 Docker &amp; cURL Quick Reference</h2>
+            <h3>Verify your Docker container is running</h3>
+            <pre>docker ps --filter name=kokoro-tts
+# Start if stopped:
+docker start kokoro-tts</pre>
+
+            <h3>Test the OpenAI-compatible speech endpoint via curl</h3>
+            <pre>curl -X POST http://127.0.0.1:8880/v1/audio/speech \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "kokoro",
+    "input": "Hello from local Kokoro Docker!",
+    "voice": "af_heart",
+    "response_format": "mp3",
+    "speed": 1.0
+  }' \
+  --output kokoro-test.mp3</pre>
+
+            <h3>Unique Page URLs</h3>
+            <ul>
+                <li>Local Guide Page: <a href="http://127.0.0.1:30088/chrome-extension.html" style="color:#7ab8ff;">http://127.0.0.1:30088/chrome-extension.html</a></li>
+                <li>Cloud Guide Page: <a href="https://secondbrain-kokoro.fly.dev/chrome-extension.html" target="_blank" rel="noopener" style="color:#7ab8ff;">https://secondbrain-kokoro.fly.dev/chrome-extension.html</a></li>
+            </ul>
+        </div>
+
+        <p class="footer">
+            Powered by Kokoro-82M &middot; <a href="/">Web UI</a> &middot; <a href="/voices">/voices</a> &middot; <a href="/v1/models">/v1/models</a> &middot; <a href="/health">/health</a>
+        </p>
+    </div>
+
+    <script>
+        function copyText(text, btn) {
+            navigator.clipboard.writeText(text).then(() => {
+                const orig = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = orig;
+                    btn.classList.remove('copied');
+                }, 1800);
+            });
+        }
+
+        function setStatus(msg, type) {
+            const el = document.getElementById('testStatus');
+            el.textContent = msg;
+            el.className = 'status ' + type;
+        }
+
+        async function testConnection() {
+            const base = document.getElementById('apiBase').value.replace(/\/$/, '');
+            const checkBtn = document.getElementById('checkBtn');
+            checkBtn.disabled = true;
+            setStatus(`Checking ${base}/models and ${base}/audio/voices ...`, 'loading');
+            try {
+                const [modelsRes, voicesRes] = await Promise.all([
+                    fetch(`${base}/models`),
+                    fetch(`${base}/audio/voices`)
+                ]);
+                if (!modelsRes.ok) throw new Error(`/models returned HTTP ${modelsRes.status}`);
+                if (!voicesRes.ok) throw new Error(`/audio/voices returned HTTP ${voicesRes.status}`);
+                const models = await modelsRes.json();
+                const voices = await voicesRes.json();
+                const modelIds = (models.data || []).map(m => m.id).join(', ');
+                const voiceCount = (voices.voices || []).length;
+                setStatus(`✅ Connected! Models: [${modelIds}] · ${voiceCount} voices available at ${base}/`, 'success');
+            } catch (err) {
+                setStatus(`❌ Connection failed (${base}): ${err.message}. Make sure Docker / server is running.`, 'error');
+            } finally {
+                checkBtn.disabled = false;
+            }
+        }
+
+        async function testSpeak() {
+            const base = document.getElementById('apiBase').value.replace(/\/$/, '');
+            const voice = document.getElementById('testVoice').value;
+            const input = document.getElementById('testText').value.trim();
+            const speakBtn = document.getElementById('speakBtn');
+            const player = document.getElementById('testPlayer');
+            if (!input) { setStatus('Please enter sample text.', 'error'); return; }
+
+            speakBtn.disabled = true;
+            player.style.display = 'none';
+            setStatus(`POST ${base}/audio/speech (voice: ${voice}) ...`, 'loading');
+            try {
+                const res = await fetch(`${base}/audio/speech`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer not-needed'
+                    },
+                    body: JSON.stringify({
+                        model: 'kokoro',
+                        input,
+                        voice,
+                        response_format: 'mp3',
+                        speed: 1.0
+                    })
+                });
+                if (!res.ok) {
+                    const txt = await res.text();
+                    throw new Error(`HTTP ${res.status}: ${txt.slice(0, 200)}`);
+                }
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                player.src = url;
+                player.style.display = 'block';
+                player.play();
+                setStatus(`✅ Audio generated (${(blob.size / 1024).toFixed(1)} KB) from ${base}/audio/speech!`, 'success');
+            } catch (err) {
+                setStatus(`❌ Speech test failed: ${err.message}`, 'error');
+            } finally {
+                speakBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

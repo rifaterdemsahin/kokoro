@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY index.html .
 COPY cost-comparison.html .
+COPY chrome-extension.html .
 COPY main.py .
 
 ENV PORT=8080

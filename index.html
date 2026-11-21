@@ -185,7 +185,7 @@
                     <div class="speed-label"><span id="t-slow">Slow</span><span id="speedVal">1.0x</span><span id="t-fast">Fast</span></div>
                 </div>
             </div>
-            <button class="generate-btn" id="generateBtn" onclick="generateAudio()">Generate Audio</button>
+            <button class="generate-btn" id="generateBtn" onclick="generateAudio()">🎙️ Generate Audio (Kokoro)</button>
             <div class="google-test-row">
                 <select id="googleVoice">
                     <option value="Kore">Kore — Firm</option>
@@ -195,14 +195,14 @@
                     <option value="Leda">Leda — Youthful</option>
                     <option value="Fenrir">Fenrir — Excitable</option>
                 </select>
-                <button class="google-btn" id="testGoogleBtn" onclick="testGoogleApi()">🧪 Test Google API</button>
+                <button class="google-btn" id="testGoogleBtn" onclick="testGoogleApi()">🧪 Generate Audio (Google API)</button>
             </div>
             <div class="status" id="status"></div>
             <audio id="player" controls style="display:none;"></audio>
             <div class="download-row" id="downloadRow" style="display:none;">
                 <a id="downloadMp3" href="#" download="kokoro-audio.mp3">Download MP3</a>
             </div>
-            <p class="alt-note" id="t-alt">🪄 Prefer a fully-managed alternative? Try <a href="https://aistudio.google.com/generate-speech" target="_blank" rel="noopener">Google AI Studio ✨🔊</a> &middot; <a href="/cost-comparison.html">💰 Fly.io vs AI Studio cost comparison</a></p>
+            <p class="alt-note" id="t-alt">🪄 Prefer a fully-managed alternative? Try <a href="https://aistudio.google.com/generate-speech" target="_blank" rel="noopener">Google AI Studio ✨🔊</a> &middot; <a href="/cost-comparison.html">💰 Fly.io vs AI Studio cost comparison</a> &middot; <a href="/chrome-extension.html">🧩 Chrome Extension &amp; API URL Guide</a></p>
         </div>
         <div class="card" id="debugPanel">
             <div class="label-row">
@@ -213,7 +213,7 @@
                 <p style="margin-top:6px;"><strong>Fix 2 — Prompt hardening:</strong> The enhancement prompt now explicitly forbids markdown, bold, italics, and underscores, requesting plain text only.</p>
             </div>
         </div>
-        <p class="footer" id="t-footer">Powered by Kokoro-82M &middot; Running on fly.io &middot; <a href="/voices" style="color:#7ab8ff;">API</a></p>
+        <p class="footer" id="t-footer">Powered by Kokoro-82M &middot; Running on fly.io &middot; <a href="/voices" style="color:#7ab8ff;">API</a> &middot; <a href="/chrome-extension.html" style="color:#7ab8ff;">🧩 Chrome Extension</a></p>
     </div>
 
     <div class="modal-overlay" id="guideModal" onclick="if(event.target===this)closeGuide()">
@@ -277,12 +277,12 @@
                 speed: "Speed",
                 slow: "Slow",
                 fast: "Fast",
-                generateBtn: "Generate Audio",
+                generateBtn: "🎙️ Generate Audio (Kokoro)",
                 enhanceBtn: "✨ Enhance Text",
-                testGoogleBtn: "🧪 Test Google API",
+                testGoogleBtn: "🧪 Generate Audio (Google API)",
                 downloadMp3: "Download MP3",
-                footer: "Powered by Kokoro-82M &middot; Running on fly.io &middot; <a href=\"/voices\" style=\"color:#7ab8ff;\">API</a>",
-                altNote: "🪄 Prefer a fully-managed alternative? Try <a href=\"https://aistudio.google.com/generate-speech\" target=\"_blank\" rel=\"noopener\">Google AI Studio ✨🔊</a> &middot; <a href=\"cost-comparison.html\">💰 Fly.io vs AI Studio cost comparison</a>",
+                footer: "Powered by Kokoro-82M &middot; Running on fly.io &middot; <a href=\"/voices\" style=\"color:#7ab8ff;\">API</a> &middot; <a href=\"/chrome-extension.html\" style=\"color:#7ab8ff;\">🧩 Chrome Extension</a>",
+                altNote: "🪄 Prefer a fully-managed alternative? Try <a href=\"https://aistudio.google.com/generate-speech\" target=\"_blank\" rel=\"noopener\">Google AI Studio ✨🔊</a> &middot; <a href=\"cost-comparison.html\">💰 Fly.io vs AI Studio cost comparison</a> &middot; <a href=\"chrome-extension.html\">🧩 Chrome Extension &amp; API URL Guide</a>",
                 chars: "chars",
                 guideTitle: "📖 How to Use Kokoro TTS",
                 guideQuick: "1. Quick Start",
@@ -319,12 +319,12 @@
                 speed: "Hız",
                 slow: "Yavaş",
                 fast: "Hızlı",
-                generateBtn: "Ses Oluştur",
+                generateBtn: "🎙️ Ses Oluştur (Kokoro)",
                 enhanceBtn: "✨ Metni Geliştir",
-                testGoogleBtn: "🧪 Google API'yi Test Et",
+                testGoogleBtn: "🧪 Ses Oluştur (Google API)",
                 downloadMp3: "MP3 İndir",
-                footer: "Kokoro-82M tarafından desteklenmektedir &middot; fly.io üzerinde çalışıyor &middot; <a href=\"/voices\" style=\"color:#7ab8ff;\">API</a>",
-                altNote: "🪄 Tamamen yönetilen bir alternatif mi istiyorsunuz? <a href=\"https://aistudio.google.com/generate-speech\" target=\"_blank\" rel=\"noopener\">Google AI Studio'yu ✨🔊</a> deneyin &middot; <a href=\"cost-comparison.html\">💰 Fly.io ile AI Studio maliyet karşılaştırması</a>",
+                footer: "Kokoro-82M tarafından desteklenmektedir &middot; fly.io üzerinde çalışıyor &middot; <a href=\"/voices\" style=\"color:#7ab8ff;\">API</a> &middot; <a href=\"/chrome-extension.html\" style=\"color:#7ab8ff;\">🧩 Chrome Eklentisi</a>",
+                altNote: "🪄 Tamamen yönetilen bir alternatif mi istiyorsunuz? <a href=\"https://aistudio.google.com/generate-speech\" target=\"_blank\" rel=\"noopener\">Google AI Studio'yu ✨🔊</a> deneyin &middot; <a href=\"cost-comparison.html\">💰 Fly.io ile AI Studio maliyet karşılaştırması</a> &middot; <a href=\"chrome-extension.html\">🧩 Chrome Eklentisi &amp; API URL Rehberi</a>",
                 chars: "karakter",
                 guideTitle: "📖 Kokoro TTS Nasıl Kullanılır",
                 guideQuick: "1. Hızlı Başlangıç",
