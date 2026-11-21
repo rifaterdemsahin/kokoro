@@ -121,7 +121,7 @@
         </div>
 
         <h1>🧩 Kokoro API URL &amp; Chrome Extension Guide</h1>
-        <p class="subtitle">Connect your running Docker Kokoro container (or Fly.io cloud endpoint) to any OpenAI-compatible Chrome TTS extension in 30 seconds.</p>
+        <p class="subtitle">Extension: <a href="https://chromewebstore.google.com/detail/kokoro-tts-sender/befhghjhbjpjnbamdginljoiaafoclmf" target="_blank" rel="noopener" style="color:#7ab8ff;">Kokoro TTS Sender (Chrome Web Store)</a> · Connect your running Docker Kokoro container (or Fly.io cloud endpoint) to any OpenAI-compatible Chrome TTS extension in 30 seconds.</p>
 
         <!-- 1. Ready-to-use API URLs -->
         <div class="card">
@@ -171,7 +171,9 @@
             <p>This is what it looks like when it's working: highlight text on any page and the extension's reader panel (top-right) reads it aloud with a Kokoro voice. It shows a progress bar, the time left, and Pause / Prev / Next / Volume / Speed controls.</p>
             <img src="/chrome-extension-reader.jpg" alt="Chrome extension reader panel reading highlighted text with Kokoro TTS"
                  style="width:100%; border-radius:10px; border:1px solid #2a2a4a; margin:8px 0 14px;">
+            <p><a href="https://chromewebstore.google.com/detail/kokoro-tts-sender/befhghjhbjpjnbamdginljoiaafoclmf" target="_blank" rel="noopener"><button class="action-btn primary" type="button">⬇️ Install "Kokoro TTS Sender" from the Chrome Web Store</button></a></p>
             <ol>
+                <li><strong>Install the extension:</strong> open <a href="https://chromewebstore.google.com/detail/kokoro-tts-sender/befhghjhbjpjnbamdginljoiaafoclmf" target="_blank" rel="noopener" style="color:#7ab8ff;">Kokoro TTS Sender on the Chrome Web Store</a>, click <em>Add to Chrome</em>, then pin it (🧩 → 📌) so it stays on your toolbar.</li>
                 <li><strong>Start a Kokoro backend.</strong> Pick one:
                     <ul>
                         <li>🐳 Docker (fastest): <code>docker start kokoro-tts</code> → <code>http://127.0.0.1:8880/v1</code></li>
@@ -180,7 +182,7 @@
                     </ul>
                 </li>
                 <li><strong>Check it here first.</strong> In the <em>Live API Tester</em> below, choose the same URL and click <strong>🔊 Test /v1/audio/speech</strong>. If you hear audio, the extension will work too.</li>
-                <li><strong>Open the extension's settings</strong> (puzzle-piece icon 🧩 in the toolbar → your TTS extension → <em>Options</em>/<em>Settings</em>) and choose the <em>OpenAI-compatible</em> / <em>Custom API</em> provider.</li>
+                <li><strong>Open the extension's settings</strong> (click the <strong>Kokoro TTS Sender</strong> icon, or 🧩 → Kokoro TTS Sender → ⋮ → <em>Options</em>) and choose the <em>OpenAI-compatible</em> / <em>Custom API</em> provider.</li>
                 <li><strong>Fill in the fields:</strong> Base URL = one of the URLs above · API Key = <code>not-needed</code> · Model = <code>kokoro</code> (or <code>tts-1</code>) · Voice = <code>af_heart</code> · Format = <code>mp3</code>. Then save.</li>
                 <li><strong>Read something:</strong> highlight text on any web page, then right-click → <em>Read aloud</em>, or click the extension icon / use its keyboard shortcut. The reader panel opens and starts speaking.</li>
                 <li><strong>Control playback</strong> from the panel: Pause, Prev/Next sentence, volume slider, and speed (e.g. <code>1.0x</code>).</li>
